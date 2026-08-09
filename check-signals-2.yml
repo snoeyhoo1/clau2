@@ -1,0 +1,26 @@
+name: Check Trading Signals
+
+# Vercel Hobby 플랜은 크론이 하루 1번으로 제한되어 있어서,
+# GitHub Actions의 무료 스케줄 기능으로 더 자주 API를 호출함.
+# 필요 설정: 이 저장소의 Settings > Secrets and variables > Actions에
+#   - APP_URL: 배포된 앱 주소 (예: https://signal-desk.vercel.app)
+#   - CRON_SECRET: Vercel 프로젝트에 설정한 것과 동일한 값
+# 를 등록해야 동작함.
+
+on:
+  schedule:
+    # 15분마다. 평일 한국 09:00~16:00(KST) + 미국장 22:30~05:00(KST, 서머타임 제외)를
+    # 대략 커버하도록 UTC 00:00~08:00(한국 09~17시)에 집중 실행.
+    # GitHub Actions 스케줄은 정확한 시각을 보장하지 않고 지연될 수 있음.
+    - cron: '*/15 0-8 * * 1-5'
+  workflow_dispatch: {} # 수동 실행 버튼도 사용 가능
+
+jobs:
+  check-signals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call signal check endpoint
+        run: |
+          curl -sS -f -X GET "${{ secrets.APP_URL }}/api/cron/check-signals" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            || echo "호출 실패 - APP_URL/CRON_SECRET 설정을 확인하세요"

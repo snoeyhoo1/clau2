@@ -1,0 +1,18 @@
+{
+  "name": "signal-desk",
+  "version": "1.0.0",
+  "description": "기술적 지표 + 뉴스 감성 기반 매매 신호 앱 (참고용, 자동매매 아님)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "generate-vapid-keys": "node scripts/generate-vapid-keys.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "web-push": "^3.6.7",
+    "@vercel/kv": "^2.0.0"
+  }
+}
