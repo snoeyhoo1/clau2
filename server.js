@@ -26,6 +26,7 @@ mount('get', '/api/scan', './api/scan');
 mount('get', '/api/market-overview', './api/market-overview');
 mount('get', '/api/signal/:ticker', './api/signal/[ticker]');
 mount('get', '/api/backtest/:ticker', './api/backtest/[ticker]');
+mount('get', '/api/chart/:ticker', './api/chart/[ticker]');
 mount('get', '/api/push/vapid-public-key', './api/push/vapid-public-key');
 mount('post', '/api/push/subscribe', './api/push/subscribe');
 mount('post', '/api/push/unsubscribe', './api/push/unsubscribe');
