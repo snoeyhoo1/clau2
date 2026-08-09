@@ -112,12 +112,13 @@ function renderTape(items) {
     return;
   }
   const doubled = [...valid, ...valid];
-  tape.innerHTML = doubled
+  const inner = doubled
     .map((i) => {
       const color = i.combinedScore >= 40 ? 'var(--buy)' : i.combinedScore <= -40 ? 'var(--sell)' : 'var(--ink-dim)';
       return `<span class="tape-item">${i.label} <span style="color:${color}">${i.combinedScore > 0 ? '+' : ''}${i.combinedScore}</span></span>`;
     })
     .join('');
+  tape.innerHTML = `<div class="tape-inner">${inner}</div>`;
 }
 
 function renderBreadth(breadth) {
@@ -201,21 +202,139 @@ async function loadScan() {
   }
 }
 
+// --- 가격 차트 (검색 상세화면용) ---
+function priceChart(dates, closes, width = 680, height = 160) {
+  if (!closes || closes.length < 2) return '<div style="color:var(--ink-dim);font-size:12px;">차트 데이터 없음</div>';
+  const min = Math.min(...closes);
+  const max = Math.max(...closes);
+  const range = max - min || 1;
+  const padTop = 10, padBottom = 20;
+  const usableH = height - padTop - padBottom;
+  const step = width / (closes.length - 1);
+
+  const points = closes.map((v, i) => {
+    const x = i * step;
+    const y = padTop + (usableH - ((v - min) / range) * usableH);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+
+  const areaPoints = `0,${height - padBottom} ${points} ${width},${height - padBottom}`;
+  const color = closes[closes.length - 1] >= closes[0] ? 'var(--buy)' : 'var(--sell)';
+  const firstDate = dates?.[0] || '';
+  const lastDate = dates?.[dates.length - 1] || '';
+
+  return `
+    <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      <polygon points="${areaPoints}" fill="${color}" opacity="0.08" />
+      <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" />
+    </svg>
+    <div class="chart-axis">
+      <span>${firstDate}</span>
+      <span style="color:var(--ink-dim)">최고 ${max.toLocaleString()} · 최저 ${min.toLocaleString()}</span>
+      <span>${lastDate}</span>
+    </div>`;
+}
+
+function sparkline(equityCurve, width = 680, height = 100) {
+  if (!equityCurve || equityCurve.length < 2) return '<div style="color:var(--ink-dim);font-size:12px;">데이터 없음</div>';
+  const min = Math.min(...equityCurve);
+  const max = Math.max(...equityCurve);
+  const range = max - min || 1;
+  const step = width / (equityCurve.length - 1);
+  const points = equityCurve
+    .map((v, i) => `${(i * step).toFixed(1)},${(height - ((v - min) / range) * height).toFixed(1)}`)
+    .join(' ');
+  const color = equityCurve[equityCurve.length - 1] >= equityCurve[0] ? 'var(--buy)' : 'var(--sell)';
+  return `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" />
+  </svg>`;
+}
+
+function renderBacktestBlock(bt, btError) {
+  if (btError) {
+    return `<div class="detail-block"><h3>자동 백테스트</h3><div class="card-error">백테스트 실패: ${btError}</div></div>`;
+  }
+  if (!bt) return '';
+  const stratClass = parseFloat(bt.strategyReturnPct) >= 0 ? 'change-up' : 'change-down';
+  const bhClass = parseFloat(bt.buyHoldReturnPct) >= 0 ? 'change-up' : 'change-down';
+  return `
+    <div class="detail-block">
+      <h3>자동 백테스트 (최근 2년, 기술적 신호 기준)</h3>
+      <div class="bt-metrics">
+        <div class="bt-metric"><div class="bt-metric-label">전략 수익률</div><div class="bt-metric-value ${stratClass}">${bt.strategyReturnPct}%</div></div>
+        <div class="bt-metric"><div class="bt-metric-label">Buy&Hold 수익률</div><div class="bt-metric-value ${bhClass}">${bt.buyHoldReturnPct}%</div></div>
+        <div class="bt-metric"><div class="bt-metric-label">거래 횟수</div><div class="bt-metric-value">${bt.numTrades}</div></div>
+        <div class="bt-metric"><div class="bt-metric-label">승률</div><div class="bt-metric-value">${bt.winRatePct}%</div></div>
+        <div class="bt-metric"><div class="bt-metric-label">최대 낙폭(MDD)</div><div class="bt-metric-value change-down">-${bt.maxDrawdownPct}%</div></div>
+      </div>
+      <div class="bt-curve">${sparkline(bt.equityCurve)}</div>
+      <div class="bt-limitation">⚠ ${bt.limitation}</div>
+    </div>`;
+}
+
+function renderDetailPanel(signal, chart, bt, btError) {
+  if (signal.error) {
+    return `<div class="detail-panel"><div class="card-error">"${signal.ticker}" 조회 실패: ${signal.error}</div></div>`;
+  }
+  const changeClass = parseFloat(signal.changePct) >= 0 ? 'change-up' : 'change-down';
+  const barPos = Math.max(-50, Math.min(50, signal.combinedScore / 2));
+  const barColor = scoreColor(signal.combinedScore);
+  const newsSourceTag = signal.news.source === 'claude' ? ' (Claude 분석)' : ' (키워드 분석)';
+
+  return `
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div>
+          <span class="card-label" style="font-size:20px;">${signal.label}</span>
+          <span class="card-ticker">${signal.ticker}</span>
+        </div>
+        <div style="text-align:right;">
+          <div class="card-price" style="font-size:24px;">${signal.currentPrice?.toLocaleString() ?? '—'} <span style="font-size:12px;color:var(--ink-dim)">${signal.currency ?? ''}</span></div>
+          <div class="card-change ${changeClass}">${fmtChange(signal.changePct)}</div>
+        </div>
+      </div>
+
+      <div class="detail-block">
+        <h3>가격 차트 (최근 6개월)</h3>
+        ${chart ? priceChart(chart.dates, chart.closes) : '<div style="color:var(--ink-dim);font-size:12px;">차트 불러오기 실패</div>'}
+      </div>
+
+      <div class="detail-block">
+        <div class="signal-badge signal-${signal.signalColor}">${signal.classification} · ${signal.combinedScore > 0 ? '+' : ''}${signal.combinedScore}</div>
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width:${Math.abs(barPos)}%; ${barPos < 0 ? 'right:50%' : 'left:50%'}; background:var(--${barColor});"></div>
+        </div>
+        ${renderUpProb(signal.upProbability)}
+        <div class="breakdown">
+          <div><b>기술적 점수</b> ${signal.technical.score} — ${signal.technical.detail?.ma ?? ''} ${signal.technical.detail?.rsiSignal ? '· RSI ' + signal.technical.detail.rsi + '(' + signal.technical.detail.rsiSignal + ')' : ''}</div>
+          <div style="margin-top:4px;"><b>뉴스 감성${newsSourceTag}</b> ${signal.news.score} — ${signal.news.detail}</div>
+          ${renderHeadlines(signal.news.headlines)}
+        </div>
+      </div>
+
+      ${renderBacktestBlock(bt, btError)}
+    </div>`;
+}
+
 // --- 종목 직접 검색 ---
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const searchResult = document.getElementById('searchResult');
 
 async function searchTicker(ticker) {
-  searchResult.innerHTML = `<div class="board"><div class="card"><div style="color:var(--ink-dim)">"${ticker}" 조회 중…</div></div></div>`;
-  try {
-    const res = await fetch(`/api/signal/${encodeURIComponent(ticker)}?label=${encodeURIComponent(ticker)}`);
-    const item = await res.json();
-    if (item.error) throw new Error(item.error);
-    searchResult.innerHTML = `<div class="board">${renderCard(item)}</div>`;
-  } catch (err) {
-    searchResult.innerHTML = `<div class="board"><div class="card"><div class="card-error">"${ticker}" 조회 실패: ${err.message}</div></div></div>`;
-  }
+  searchResult.innerHTML = `<div class="detail-panel"><div style="color:var(--ink-dim)">"${ticker}" 조회 중… (차트·신호·백테스트 동시 진행)</div></div>`;
+  const [signalRes, chartRes, btRes] = await Promise.allSettled([
+    fetch(`/api/signal/${encodeURIComponent(ticker)}?label=${encodeURIComponent(ticker)}`).then((r) => r.json()),
+    fetch(`/api/chart/${encodeURIComponent(ticker)}?range=6mo`).then((r) => r.json()),
+    fetch(`/api/backtest/${encodeURIComponent(ticker)}?range=2y`).then((r) => r.json()),
+  ]);
+
+  const signal = signalRes.status === 'fulfilled' ? signalRes.value : { error: signalRes.reason?.message || '조회 실패', ticker };
+  const chart = chartRes.status === 'fulfilled' && !chartRes.value.error ? chartRes.value : null;
+  const bt = btRes.status === 'fulfilled' && !btRes.value.error ? btRes.value : null;
+  const btError = btRes.status === 'fulfilled' ? btRes.value.error : (btRes.reason?.message || null);
+
+  searchResult.innerHTML = renderDetailPanel(signal, chart, bt, bt ? null : btError);
 }
 
 searchBtn.addEventListener('click', () => {
@@ -243,73 +362,6 @@ document.addEventListener('visibilitychange', () => {
     refreshTimer = setInterval(() => { loadScan(); loadMarketOverview(); }, 60 * 1000);
   }
 });
-
-// --- 백테스트 ---
-const backtestBtn = document.getElementById('backtestBtn');
-const backtestTicker = document.getElementById('backtestTicker');
-const backtestRange = document.getElementById('backtestRange');
-const backtestResult = document.getElementById('backtestResult');
-
-function sparkline(equityCurve, width = 600, height = 80) {
-  const min = Math.min(...equityCurve);
-  const max = Math.max(...equityCurve);
-  const range = max - min || 1;
-  const step = width / (equityCurve.length - 1);
-  const points = equityCurve
-    .map((v, i) => `${(i * step).toFixed(1)},${(height - ((v - min) / range) * height).toFixed(1)}`)
-    .join(' ');
-  const color = equityCurve[equityCurve.length - 1] >= equityCurve[0] ? 'var(--buy)' : 'var(--sell)';
-  return `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
-    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" />
-  </svg>`;
-}
-
-async function runBacktest() {
-  const ticker = backtestTicker.value.trim();
-  if (!ticker) return;
-  backtestResult.innerHTML = '<div style="padding:16px;color:var(--ink-dim)">계산 중…</div>';
-  try {
-    const res = await fetch(`/api/backtest/${encodeURIComponent(ticker)}?range=${backtestRange.value}`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-
-    const stratClass = parseFloat(data.strategyReturnPct) >= 0 ? 'change-up' : 'change-down';
-    const bhClass = parseFloat(data.buyHoldReturnPct) >= 0 ? 'change-up' : 'change-down';
-
-    backtestResult.innerHTML = `
-      <div class="bt-result">
-        <div class="bt-metrics">
-          <div class="bt-metric">
-            <div class="bt-metric-label">전략 수익률</div>
-            <div class="bt-metric-value ${stratClass}">${data.strategyReturnPct}%</div>
-          </div>
-          <div class="bt-metric">
-            <div class="bt-metric-label">단순 보유(Buy&Hold) 수익률</div>
-            <div class="bt-metric-value ${bhClass}">${data.buyHoldReturnPct}%</div>
-          </div>
-          <div class="bt-metric">
-            <div class="bt-metric-label">거래 횟수</div>
-            <div class="bt-metric-value">${data.numTrades}</div>
-          </div>
-          <div class="bt-metric">
-            <div class="bt-metric-label">승률</div>
-            <div class="bt-metric-value">${data.winRatePct}%</div>
-          </div>
-          <div class="bt-metric">
-            <div class="bt-metric-label">최대 낙폭(MDD)</div>
-            <div class="bt-metric-value change-down">-${data.maxDrawdownPct}%</div>
-          </div>
-        </div>
-        <div class="bt-curve">${sparkline(data.equityCurve)}</div>
-        <div class="bt-limitation">⚠ ${data.limitation}</div>
-      </div>`;
-  } catch (err) {
-    backtestResult.innerHTML = `<div style="padding:16px;color:var(--sell)">백테스트 실패: ${err.message}</div>`;
-  }
-}
-
-backtestBtn.addEventListener('click', runBacktest);
-backtestTicker.addEventListener('keydown', (e) => { if (e.key === 'Enter') runBacktest(); });
 
 // --- 홈 화면 설치 ---
 const installBtn = document.getElementById('installBtn');
