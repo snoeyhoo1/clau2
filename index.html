@@ -4,41 +4,83 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#0d1117" />
+
   <title>SIGNAL DESK</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
 
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
-  <!-- 상단 티커 -->
+  <!-- =========================================================
+       MARKET TAPE
+       ========================================================= -->
+
   <div class="tape-wrap">
-    <div class="tape-label">MARKET</div>
+
+    <div class="tape-label">
+      MARKET
+    </div>
 
     <div class="tape">
-      <div id="tape" class="tape-inner">
-        <span class="tape-loading">시장 데이터를 불러오는 중...</span>
+
+      <div
+        id="tape"
+        class="tape-inner"
+      >
+        <span class="tape-loading">
+          시장 데이터를 불러오는 중...
+        </span>
       </div>
+
     </div>
+
   </div>
 
-  <!-- 헤더 -->
+
+  <!-- =========================================================
+       HEADER
+       ========================================================= -->
+
   <header class="topbar">
+
     <div class="brand">
-      <div class="brand-mark">◆</div>
+
+      <div class="brand-mark">
+        ◆
+      </div>
 
       <div class="brand-text">
-        <h1>SIGNAL DESK</h1>
-        <p>AI MARKET SIGNAL &amp; ANALYSIS</p>
+
+        <h1>
+          SIGNAL DESK
+        </h1>
+
+        <p>
+          AI MARKET SIGNAL &amp; ANALYSIS
+        </p>
+
       </div>
+
     </div>
 
+
     <div class="topbar-actions">
-      <span id="updated" class="updated">업데이트 대기</span>
+
+      <span
+        id="updated"
+        class="updated"
+      >
+        업데이트 대기
+      </span>
 
       <button
         id="refreshBtn"
@@ -47,20 +89,53 @@
       >
         REFRESH
       </button>
+
     </div>
+
   </header>
+
+
+  <!-- =========================================================
+       MAIN
+       ========================================================= -->
 
   <main>
 
-    <!-- 종목 검색 -->
-    <section class="search-section">
+
+    <!-- =======================================================
+         STOCK SEARCH
+         ======================================================= -->
+
+    <section
+      class="search-section"
+      id="stockSearch"
+    >
+
       <div class="search-bar">
-        <input
-          id="searchInput"
-          type="text"
-          autocomplete="off"
-          placeholder="종목명 또는 종목코드 검색"
-        />
+
+        <div class="search-input-wrap">
+
+          <input
+            id="searchInput"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="종목명 또는 종목코드 검색"
+            aria-label="종목 검색"
+          />
+
+          <button
+            id="searchClearBtn"
+            class="search-clear"
+            type="button"
+            aria-label="검색어 지우기"
+            hidden
+          >
+            ×
+          </button>
+
+        </div>
+
 
         <button
           id="searchBtn"
@@ -70,34 +145,137 @@
           SEARCH
         </button>
 
-        <div class="search-hint">
-          종목명 또는 코드 입력 · 예:
-          <code>삼성전자</code>,
-          <code>005930</code>
-        </div>
       </div>
 
-      <div id="searchResult" class="search-result"></div>
+
+      <div class="search-hint">
+
+        종목명 또는 코드 입력 · 예:
+
+        <button
+          type="button"
+          class="search-example"
+          data-search-example="삼성전자"
+        >
+          삼성전자
+        </button>
+
+        ,
+
+        <button
+          type="button"
+          class="search-example"
+          data-search-example="005930"
+        >
+          005930
+        </button>
+
+        ,
+
+        <button
+          type="button"
+          class="search-example"
+          data-search-example="NVDA"
+        >
+          NVDA
+        </button>
+
+      </div>
+
+
+      <!-- 검색 결과 / AI 분석 결과 -->
+
+      <div
+        id="searchResult"
+        class="search-result"
+        aria-live="polite"
+      ></div>
+
     </section>
 
-    <!-- 시장 현황 -->
+
+
+    <!-- =======================================================
+         MARKET OVERVIEW
+         ======================================================= -->
+
     <section
       id="marketOverview"
       class="market-overview"
     >
+
       <div class="mo-loading">
         시장 데이터를 불러오는 중...
       </div>
+
     </section>
 
-    <!-- 시장 Breadth -->
+
+
+    <!-- =======================================================
+         MARKET REGIME
+         ======================================================= -->
+
+    <section
+      id="marketRegime"
+      class="market-regime-section"
+    >
+
+      <div class="market-regime-header">
+
+        <div>
+
+          <h2 class="section-title">
+            MARKET REGIME
+          </h2>
+
+          <p class="section-subtitle">
+            AI가 현재 시장의 방향성과 위험 환경을 종합 판단합니다.
+          </p>
+
+        </div>
+
+        <span
+          id="marketRegimeBadge"
+          class="regime-badge"
+        >
+          ANALYZING
+        </span>
+
+      </div>
+
+
+      <div
+        id="marketRegimeContent"
+        class="market-regime-content"
+      >
+
+        <div class="account-notice">
+          시장 국면을 분석하는 중...
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =======================================================
+         MARKET BREADTH
+         ======================================================= -->
+
     <section
       id="breadthBar"
       class="breadth-bar"
     >
-      <span>MARKET BREADTH</span>
+
+      <span>
+        MARKET BREADTH
+      </span>
+
 
       <div class="breadth-track">
+
         <div
           id="breadthBuy"
           class="breadth-buy"
@@ -115,61 +293,239 @@
           class="breadth-sell"
           style="width: 0%"
         ></div>
+
       </div>
 
-      <span id="breadthText">-</span>
+
+      <span id="breadthText">
+        -
+      </span>
+
     </section>
 
-    <!-- 매수 / 매도 스캔 -->
+
+
+    <!-- =======================================================
+         MARKET NEWS
+         ======================================================= -->
+
+    <section
+      id="marketNews"
+      class="market-news-section"
+    >
+
+      <div class="market-news-header">
+
+        <div>
+
+          <h2 class="section-title">
+            MARKET NEWS
+          </h2>
+
+          <p class="market-news-subtitle">
+            주요 시황 · 금리 · 환율 · 반도체 · 글로벌 시장
+          </p>
+
+        </div>
+
+
+        <button
+          id="marketNewsRefresh"
+          class="btn-refresh"
+          type="button"
+        >
+          NEWS REFRESH
+        </button>
+
+      </div>
+
+
+      <div
+        id="marketNewsList"
+        class="market-news-list"
+        aria-live="polite"
+      >
+
+        <div class="account-notice">
+          주요 시황 뉴스를 불러오는 중...
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =======================================================
+         AI MARKET SUMMARY
+         ======================================================= -->
+
+    <section
+      id="marketAiSummary"
+      class="market-ai-section"
+    >
+
+      <div class="market-ai-header">
+
+        <div>
+
+          <h2 class="section-title">
+            AI MARKET VIEW
+          </h2>
+
+          <p class="market-news-subtitle">
+            시장 데이터와 주요 시황을 종합한 현재 시장 판단
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div
+        id="marketAiSummaryContent"
+        class="market-ai-content"
+      >
+
+        <div class="account-notice">
+          AI 시장 판단을 준비하는 중...
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =======================================================
+         BUY / SELL SCAN
+         ======================================================= -->
+
     <section class="scan-section">
 
+
       <div class="scan-column">
+
         <h2 class="scan-heading buy-heading">
           BUY CANDIDATES
         </h2>
+
 
         <div
           id="buyBoard"
           class="board"
         >
+
           <div class="card">
+
             <div class="card-error">
               데이터를 불러오는 중...
             </div>
+
           </div>
+
         </div>
+
       </div>
 
+
+
       <div class="scan-column">
+
         <h2 class="scan-heading sell-heading">
           SELL / WATCH
         </h2>
+
 
         <div
           id="sellBoard"
           class="board"
         >
+
           <div class="card">
+
             <div class="card-error">
               데이터를 불러오는 중...
             </div>
+
           </div>
+
         </div>
+
       </div>
+
 
     </section>
 
-    <!-- 실전 계좌 -->
+
+
+    <!-- =======================================================
+         SELECTED STOCK AI ANALYSIS
+         ======================================================= -->
+
+    <section
+      id="selectedStockAnalysis"
+      class="selected-stock-section"
+      hidden
+    >
+
+      <div class="selected-stock-header">
+
+        <div>
+
+          <h2 class="section-title">
+            AI STOCK ANALYSIS
+          </h2>
+
+          <p
+            id="selectedStockSubtitle"
+            class="section-subtitle"
+          >
+            -
+          </p>
+
+        </div>
+
+
+        <button
+          id="selectedStockClose"
+          class="btn-refresh"
+          type="button"
+        >
+          CLOSE
+        </button>
+
+      </div>
+
+
+      <div
+        id="selectedStockContent"
+        class="selected-stock-content"
+      ></div>
+
+    </section>
+
+
+
+    <!-- =======================================================
+         REAL ACCOUNT
+         ======================================================= -->
+
     <section
       id="accountSection"
       class="account-section"
     >
+
       <h2 class="section-title">
+
         MY ACCOUNT
+
         <span class="env-badge env-real">
           REAL
         </span>
+
       </h2>
+
 
       <div
         id="accountNotice"
@@ -178,86 +534,133 @@
         실전 계좌 정보를 불러오는 중...
       </div>
 
+
       <div
         id="accountSummary"
         class="account-summary"
       >
+
         <div>
+
           <span class="account-label">
             총 평가금액
           </span>
+
           <strong id="accountTotal">
             -
           </strong>
+
         </div>
 
+
         <div>
+
           <span class="account-label">
             주문 가능 금액
           </span>
+
           <strong id="accountAvailable">
             -
           </strong>
+
         </div>
 
+
         <div>
+
           <span class="account-label">
             평가손익
           </span>
+
           <strong id="accountProfit">
             -
           </strong>
+
         </div>
 
+
         <div>
+
           <span class="account-label">
             수익률
           </span>
+
           <strong id="accountRate">
             -
           </strong>
+
         </div>
+
       </div>
+
 
       <div class="account-subheading">
         HOLDINGS
       </div>
 
+
       <div
         id="holdingsList"
         class="holdings-list"
       >
+
         <div class="account-notice">
           보유 종목을 불러오는 중...
         </div>
+
       </div>
+
     </section>
 
-    <!-- 백테스트 -->
+
+
+    <!-- =======================================================
+         BACKTEST
+         ======================================================= -->
+
     <section class="backtest-panel">
 
       <h2>
         STRATEGY BACKTEST
       </h2>
 
+
       <p class="hint">
-        현재 전략을 과거 데이터에 적용해 성과를 확인합니다.
+        현재 Multi-Agent 전략을 과거 데이터에 적용해 성과를 확인합니다.
       </p>
+
 
       <div class="backtest-controls">
 
         <input
           id="backtestTicker"
           type="text"
+          autocomplete="off"
+          spellcheck="false"
           placeholder="종목코드"
         />
 
+
         <select id="backtestPeriod">
-          <option value="1y">1 YEAR</option>
-          <option value="2y">2 YEARS</option>
-          <option value="3y">3 YEARS</option>
-          <option value="5y">5 YEARS</option>
+
+          <option value="1y">
+            1 YEAR
+          </option>
+
+          <option value="2y">
+            2 YEARS
+          </option>
+
+          <option value="3y">
+            3 YEARS
+          </option>
+
+          <option value="5y">
+            5 YEARS
+          </option>
+
         </select>
+
 
         <button
           id="backtestBtn"
@@ -269,6 +672,7 @@
 
       </div>
 
+
       <div
         id="backtestResult"
         class="bt-result"
@@ -276,21 +680,32 @@
 
     </section>
 
+
+
   </main>
 
-  <!-- 실전 주문 모달 -->
+
+
+  <!-- =========================================================
+       REAL ORDER MODAL
+       ========================================================= -->
+
   <div
     id="orderModal"
     class="modal-overlay"
     hidden
   >
+
     <div class="modal">
+
 
       <h3 id="orderTitle">
         REAL ORDER
       </h3>
 
+
       <div class="order-field">
+
         <label for="orderTicker">
           종목코드
         </label>
@@ -301,9 +716,12 @@
           inputmode="numeric"
           autocomplete="off"
         />
+
       </div>
 
+
       <div class="order-field">
+
         <label for="orderQuantity">
           주문 수량
         </label>
@@ -315,9 +733,12 @@
           step="1"
           value="1"
         />
+
       </div>
 
+
       <div class="order-field">
+
         <label for="orderPrice">
           주문 가격
         </label>
@@ -329,12 +750,18 @@
           step="1"
           placeholder="시장가 주문 시 비워두세요"
         />
+
       </div>
 
+
       <div class="order-warning">
+
         실전 계좌에 실제 주문이 전송됩니다.
+
         주문 전 종목·수량·가격을 반드시 확인하세요.
+
       </div>
+
 
       <div class="modal-actions">
 
@@ -346,6 +773,7 @@
           CANCEL
         </button>
 
+
         <button
           id="orderConfirmBtn"
           class="btn-trade btn-buy"
@@ -356,17 +784,34 @@
 
       </div>
 
+
       <div
         id="orderMessage"
         class="order-success"
       ></div>
 
+
     </div>
+
   </div>
 
+
+
+  <!-- =========================================================
+       FOOTER
+       ========================================================= -->
+
   <footer class="disclaimer">
+
     SIGNAL DESK · REAL MARKET DATA · REAL ACCOUNT
+
   </footer>
+
+
+
+  <!-- =========================================================
+       APP
+       ========================================================= -->
 
   <script src="app.js"></script>
 
