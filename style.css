@@ -159,7 +159,7 @@ body {
 }
 
 .btn-install:hover {
-  background: rgba(232,169,75,0.1);
+  background: rgba(232, 169, 75, 0.1);
 }
 
 .board {
@@ -257,7 +257,6 @@ body {
   margin-top: 6px;
 }
 
-/* 시장 현황 */
 .market-overview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -414,19 +413,19 @@ body {
 }
 
 .signal-buy {
-  background: rgba(75,201,138,0.15);
+  background: rgba(75, 201, 138, 0.15);
   color: var(--buy);
   border: 1px solid var(--buy);
 }
 
 .signal-sell {
-  background: rgba(227,92,92,0.15);
+  background: rgba(227, 92, 92, 0.15);
   color: var(--sell);
   border: 1px solid var(--sell);
 }
 
 .signal-hold {
-  background: rgba(125,138,156,0.15);
+  background: rgba(125, 138, 156, 0.15);
   color: var(--hold);
   border: 1px solid var(--hold);
 }
@@ -493,7 +492,7 @@ body {
   margin-top: 12px;
   font-size: 11px;
   padding: 10px;
-  background: rgba(232,169,75,0.06);
+  background: rgba(232, 169, 75, 0.06);
   border: 1px solid var(--line);
   border-radius: 3px;
 }
@@ -638,13 +637,7 @@ body {
   border-top: 1px solid var(--line);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .tape {
-    animation: none;
-  }
-}
-
-/* 실전 계좌 */
+/* 내 계좌 */
 .account-section {
   margin: 24px 32px 0;
   padding: 20px;
@@ -670,9 +663,13 @@ body {
   letter-spacing: 0;
 }
 
-/* 실전투자 전용 */
+.env-mock {
+  background: rgba(125, 138, 156, 0.2);
+  color: var(--ink-dim);
+}
+
 .env-real {
-  background: rgba(227,92,92,0.15);
+  background: rgba(227, 92, 92, 0.15);
   color: var(--sell);
   border: 1px solid var(--sell);
 }
@@ -736,7 +733,7 @@ body {
   margin-top: 2px;
 }
 
-/* 실전 매수/매도 버튼 */
+/* 매수/매도 버튼 */
 .trade-buttons {
   display: flex;
   gap: 10px;
@@ -755,34 +752,43 @@ body {
 }
 
 .btn-buy {
-  background: rgba(75,201,138,0.12);
+  background: rgba(75, 201, 138, 0.12);
   color: var(--buy);
   border-color: var(--buy);
 }
 
 .btn-buy:hover {
-  background: rgba(75,201,138,0.22);
+  background: rgba(75, 201, 138, 0.22);
 }
 
 .btn-sell {
-  background: rgba(227,92,92,0.12);
+  background: rgba(227, 92, 92, 0.12);
   color: var(--sell);
   border-color: var(--sell);
 }
 
 .btn-sell:hover {
-  background: rgba(227,92,92,0.22);
+  background: rgba(227, 92, 92, 0.22);
 }
 
-/* 실전 주문 확인 모달 */
+/* 주문 확인 모달 */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: flex-end;
   justify-content: center;
   z-index: 100;
+}
+
+/*
+ * 중요:
+ * HTML의 hidden 속성이 붙은 모달은
+ * 위의 display:flex보다 우선해서 반드시 숨긴다.
+ */
+[hidden] {
+  display: none !important;
 }
 
 @media (min-width: 600px) {
@@ -861,25 +867,45 @@ body {
   text-align: center;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .tape-inner {
+    animation: none;
+  }
+}
+
 /* 모바일 */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
   .topbar {
     padding: 20px 16px 16px;
-    gap: 12px;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   .topbar-actions {
-    gap: 8px;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
-  .updated {
-    display: none;
+  .search-bar {
+    margin: 0 16px;
   }
 
-  .search-bar,
-  .market-overview,
-  .breadth-bar,
-  .scan-section,
+  .market-overview {
+    margin: 0 16px;
+  }
+
+  .breadth-bar {
+    margin-left: 16px;
+    margin-right: 16px;
+    flex-wrap: wrap;
+  }
+
+  .scan-section {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
   .account-section {
     margin-left: 16px;
     margin-right: 16px;
@@ -890,7 +916,8 @@ body {
     margin-right: 16px;
   }
 
-  .trade-buttons {
-    flex-direction: column;
+  .search-result {
+    margin-left: 16px;
+    margin-right: 16px;
   }
 }
