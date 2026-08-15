@@ -1308,3 +1308,666 @@ window.addEventListener(
     ]);
   }
 );
+/*
+ * ============================================================
+ * Stock Search
+ * ============================================================
+ */
+
+const searchInput =
+  document.getElementById(
+    'searchInput'
+  );
+
+const searchBtn =
+  document.getElementById(
+    'searchBtn'
+  );
+
+const searchResult =
+  document.getElementById(
+    'searchResult'
+  );
+
+function renderSearchResults(
+  results
+) {
+  if (!searchResult) {
+    return;
+  }
+
+  if (
+    !Array.isArray(
+      results
+    ) ||
+    !results.length
+  ) {
+    searchResult.innerHTML = `
+      <div class="search-empty">
+        검색 결과가 없습니다.
+      </div>
+    `;
+
+    return;
+  }
+
+  searchResult.innerHTML = `
+    <div class="search-results-list">
+
+      ${results
+        .map(
+          (item) => `
+            <button
+              type="button"
+              class="search-result-item"
+              data-search-ticker="${escapeHtml(
+                item.ticker
+              )}"
+              data-search-label="${escapeHtml(
+                item.label
+              )}"
+            >
+
+              <span class="search-result-main">
+
+                <strong>
+                  ${escapeHtml(
+                    item.label
+                  )}
+                </strong>
+
+                <small>
+                  ${escapeHtml(
+                    item.ticker
+                  )}
+                </small>
+
+              </span>
+
+              <span class="search-result-exchange">
+                ${escapeHtml(
+                  item.exchange ||
+                    ''
+                )}
+              </span>
+
+              <span class="search-result-action">
+                ANALYZE →
+              </span>
+
+            </button>
+          `
+        )
+        .join('')}
+
+    </div>
+  `;
+
+  searchResult
+    .querySelectorAll(
+      '[data-search-ticker]'
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          'click',
+          async () => {
+            const ticker =
+              button.dataset
+                .searchTicker;
+
+            const label =
+              button.dataset
+                .searchLabel;
+
+            await analyzeSearchedStock(
+              ticker,
+              label
+            );
+          }
+        );
+      }
+    );
+}
+
+async function searchStocks() {
+  if (!searchInput) {
+    return;
+  }
+
+  const query =
+    searchInput.value.trim();
+
+  if (!query) {
+    if (searchResult) {
+      searchResult.innerHTML = `
+        <div class="search-empty">
+          종목명 또는 종목코드를 입력하세요.
+        </div>
+      `;
+    }
+
+    return;
+  }
+
+  if (searchBtn) {
+    searchBtn.disabled =
+      true;
+
+    searchBtn.textContent =
+      'SEARCHING...';
+  }
+
+  if (searchResult) {
+    searchResult.innerHTML = `
+      <div class="search-loading">
+        종목을 검색하는 중...
+      </div>
+    `;
+  }
+
+  try {
+    const response =
+      await fetch(
+        `/api/search?q=${encodeURIComponent(
+          query
+        )}`,
+        {
+          cache:
+            'no-store',
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+          '검색 실패'
+      );
+    }
+
+    renderSearchResults(
+      data.results
+    );
+  } catch (error) {
+    console.error(
+      '[stock search]',
+      error
+    );
+
+    if (searchResult) {
+      searchResult.innerHTML = `
+        <div class="search-error">
+          검색 중 오류가 발생했습니다.
+          <br />
+          ${escapeHtml(
+            error.message
+          )}
+        </div>
+      `;
+    }
+  } finally {
+    if (searchBtn) {
+      searchBtn.disabled =
+        false;
+
+      searchBtn.textContent =
+        'SEARCH';
+    }
+  }
+}
+
+async function analyzeSearchedStock(
+  ticker,
+  label
+) {
+  if (!searchResult) {
+    return;
+  }
+
+  searchResult.innerHTML = `
+    <div class="search-loading">
+      <strong>
+        ${escapeHtml(
+          label
+        )}
+      </strong>
+      (${escapeHtml(
+        ticker
+      )})
+      AI 분석 중...
+    </div>
+  `;
+
+  try {
+    const response =
+      await fetch(
+        `/api/signal/${encodeURIComponent(
+          ticker
+        )}?label=${encodeURIComponent(
+          label || ticker
+        )}`,
+        {
+          cache:
+            'no-store',
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+          'AI 분석 실패'
+      );
+    }
+
+    const signal =
+      data.signal;
+
+    const confidence =
+      num(
+        data.confidence
+      );
+
+    const strength =
+      num(
+        data.strength
+      );
+
+    const regime =
+      data.regime ||
+      'UNKNOWN';
+
+    const reason =
+      data.reason ||
+      '판단 이유 없음';
+
+    const decision =
+      signal === 1
+        ? 'LONG'
+        : signal === -1
+          ? 'EXIT'
+          : 'WAIT';
+
+    const decisionClass =
+      signal === 1
+        ? 'buy'
+        : signal === -1
+          ? 'sell'
+          : 'hold';
+
+    searchResult.innerHTML = `
+      <div class="search-analysis">
+
+        <div class="search-analysis-header">
+
+          <div>
+            <strong>
+              ${escapeHtml(
+                label
+              )}
+            </strong>
+
+            <small>
+              ${escapeHtml(
+                ticker
+              )}
+            </small>
+          </div>
+
+          <span
+            class="signal-badge signal-${decisionClass}"
+          >
+            ${decision}
+          </span>
+
+        </div>
+
+        <div class="search-analysis-grid">
+
+          <div>
+            <span>AI SCORE</span>
+            <strong>
+              ${strength.toFixed(
+                1
+              )}
+            </strong>
+          </div>
+
+          <div>
+            <span>CONFIDENCE</span>
+            <strong>
+              ${confidence.toFixed(
+                1
+              )}%
+            </strong>
+          </div>
+
+          <div>
+            <span>REGIME</span>
+            <strong>
+              ${escapeHtml(
+                regime
+              )}
+            </strong>
+          </div>
+
+        </div>
+
+        <div class="search-analysis-reason">
+          ${escapeHtml(
+            reason
+          )}
+        </div>
+
+        <button
+          type="button"
+          id="searchBackBtn"
+          class="btn-refresh"
+        >
+          ← 검색 결과
+        </button>
+
+      </div>
+    `;
+
+    document
+      .getElementById(
+        'searchBackBtn'
+      )
+      ?.addEventListener(
+        'click',
+        searchStocks
+      );
+  } catch (error) {
+    console.error(
+      '[searched stock analysis]',
+      error
+    );
+
+    searchResult.innerHTML = `
+      <div class="search-error">
+
+        분석 실패:
+        ${escapeHtml(
+          error.message
+        )}
+
+        <br /><br />
+
+        <button
+          type="button"
+          id="searchRetryBtn"
+          class="btn-refresh"
+        >
+          다시 분석
+        </button>
+
+      </div>
+    `;
+
+    document
+      .getElementById(
+        'searchRetryBtn'
+      )
+      ?.addEventListener(
+        'click',
+        () =>
+          analyzeSearchedStock(
+            ticker,
+            label
+          )
+      );
+  }
+}
+
+if (searchBtn) {
+  searchBtn.addEventListener(
+    'click',
+    searchStocks
+  );
+}
+
+if (searchInput) {
+  searchInput.addEventListener(
+    'keydown',
+    (event) => {
+      if (
+        event.key ===
+        'Enter'
+      ) {
+        event.preventDefault();
+
+        searchStocks();
+      }
+    }
+  );
+}
+
+/*
+ * ============================================================
+ * Market News
+ * ============================================================
+ */
+
+const marketNewsList =
+  document.getElementById(
+    'marketNewsList'
+  );
+
+const marketNewsRefresh =
+  document.getElementById(
+    'marketNewsRefresh'
+  );
+
+function formatNewsTime(
+  value
+) {
+  const time =
+    Date.parse(
+      value
+    );
+
+  if (!time) {
+    return '';
+  }
+
+  return new Date(
+    time
+  ).toLocaleString(
+    'ko-KR',
+    {
+      month:
+        '2-digit',
+      day:
+        '2-digit',
+      hour:
+        '2-digit',
+      minute:
+        '2-digit',
+    }
+  );
+}
+
+function newsCategoryLabel(
+  category
+) {
+  const map = {
+    KOREA:
+      'KOREA',
+    US:
+      'US MARKET',
+    SEMICONDUCTOR:
+      'SEMICONDUCTOR',
+    MACRO:
+      'MACRO',
+    GLOBAL:
+      'GLOBAL',
+  };
+
+  return (
+    map[
+      category
+    ] ||
+    'MARKET'
+  );
+}
+
+function renderMarketNews(
+  articles
+) {
+  if (!marketNewsList) {
+    return;
+  }
+
+  if (
+    !Array.isArray(
+      articles
+    ) ||
+    !articles.length
+  ) {
+    marketNewsList.innerHTML = `
+      <div class="account-notice">
+        현재 표시할 주요 시황 뉴스가 없습니다.
+      </div>
+    `;
+
+    return;
+  }
+
+  marketNewsList.innerHTML =
+    articles
+      .map(
+        (article) => `
+          <article class="market-news-item">
+
+            <div class="market-news-meta">
+
+              <span class="market-news-category">
+                ${escapeHtml(
+                  newsCategoryLabel(
+                    article.category
+                  )
+                )}
+              </span>
+
+              <span>
+                ${escapeHtml(
+                  article.source ||
+                    ''
+                )}
+              </span>
+
+              <span>
+                ${escapeHtml(
+                  formatNewsTime(
+                    article.pubDate
+                  )
+                )}
+              </span>
+
+            </div>
+
+            <a
+              class="market-news-title"
+              href="${escapeHtml(
+                article.link ||
+                  '#'
+              )}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ${escapeHtml(
+                article.title
+              )}
+            </a>
+
+          </article>
+        `
+      )
+      .join('');
+}
+
+async function loadMarketNews() {
+  if (!marketNewsList) {
+    return;
+  }
+
+  if (marketNewsRefresh) {
+    marketNewsRefresh.disabled =
+      true;
+
+    marketNewsRefresh.textContent =
+      'LOADING...';
+  }
+
+  marketNewsList.innerHTML = `
+    <div class="account-notice">
+      주요 시황 뉴스를 불러오는 중...
+    </div>
+  `;
+
+  try {
+    const response =
+      await fetch(
+        '/api/market-news?limit=20',
+        {
+          cache:
+            'no-store',
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+          '뉴스 조회 실패'
+      );
+    }
+
+    renderMarketNews(
+      data.articles
+    );
+  } catch (error) {
+    console.error(
+      '[market news]',
+      error
+    );
+
+    marketNewsList.innerHTML = `
+      <div class="search-error">
+        주요 시황 뉴스를 불러오지 못했습니다.
+        <br />
+        ${escapeHtml(
+          error.message
+        )}
+      </div>
+    `;
+  } finally {
+    if (marketNewsRefresh) {
+      marketNewsRefresh.disabled =
+        false;
+
+      marketNewsRefresh.textContent =
+        'NEWS REFRESH';
+    }
+  }
+}
+
+if (marketNewsRefresh) {
+  marketNewsRefresh.addEventListener(
+    'click',
+    loadMarketNews
+  );
+}
+
+/*
+ * 초기 뉴스 로딩.
+ */
+loadMarketNews();
