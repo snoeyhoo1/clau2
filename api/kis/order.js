@@ -1,14 +1,33 @@
 // api/kis/order.js
-const { placeOrder, placeOverseasOrder } = require('../../lib/kisClient');
+
+const {
+  placeOrder,
+  placeOverseasOrder,
+} = require('../../lib/kisClient');
 
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST만 지원' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({
+      error: 'POST만 지원',
+    });
+  }
+
   try {
-    const { market, code, quantity, price, side, orderType, exchange, confirm } = req.body || {};
+    const {
+      market,
+      code,
+      quantity,
+      price,
+      side,
+      orderType,
+      exchange,
+      confirm,
+    } = req.body || {};
 
     let result;
+
     if (market === 'overseas') {
-      result = await placeOverseasOrder(undefined, {
+      result = await placeOverseasOrder({
         code,
         quantity: Number(quantity),
         price: Number(price),
@@ -17,7 +36,7 @@ module.exports = async (req, res) => {
         confirm,
       });
     } else {
-      result = await placeOrder(undefined, {
+      result = await placeOrder({
         code,
         quantity: Number(quantity),
         price: price ? Number(price) : undefined,
@@ -26,8 +45,11 @@ module.exports = async (req, res) => {
         confirm,
       });
     }
-    res.status(200).json(result);
+
+    return res.status(200).json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return res.status(400).json({
+      error: err.message,
+    });
   }
 };
