@@ -12,7 +12,7 @@ const sellBoard = document.getElementById('sellBoard');
 const marketOverview = document.getElementById('marketOverview');
 const breadthBar = document.getElementById('breadthBar');
 const tape = document.getElementById('tape');
-const updatedAt = document.getElementById('updatedAt');
+const updatedAt = document.getElementById('updated');
 const refreshBtn = document.getElementById('refreshBtn');
 
 function fmtChange(pct) {
