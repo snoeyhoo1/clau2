@@ -1,73 +1,149 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SIGNAL DESK — 나만의 매매 신호 보드</title>
-<link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#0d1117" />
-<link rel="icon" href="/icons/icon-192.png" />
-<link rel="apple-touch-icon" href="/icons/icon-192.png" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="SignalDesk" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIGNAL DESK</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-
-  <div class="tape-wrap">
-    <span class="tape-label">종합점수</span>
-    <div class="tape" id="tape">
-      <span class="tape-loading">데이터 불러오는 중…</span>
-    </div>
-  </div>
-
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark">◉</span>
-      <div class="brand-text">
-        <h1>SIGNAL DESK</h1>
-        <p>기술적 지표 + 뉴스 감성 · 자동 스캔 · 참고용 분석</p>
-      </div>
+    <div>
+      <h1>SIGNAL DESK</h1>
+      <p>기술적 지표 + 뉴스 감성 · 자동 스캔 · 실전계좌 연동</p>
     </div>
-    <div class="topbar-actions">
-      <span class="updated" id="updatedAt">—</span>
-      <button id="notifyBtn" class="btn-install">알림 켜기</button>
-      <button id="installBtn" class="btn-install" hidden>홈 화면에 추가</button>
-      <button id="refreshBtn" class="btn-refresh">새로고침</button>
+
+    <div class="live-indicator">
+      <span></span>
+      LIVE
     </div>
   </header>
 
-  <section class="search-bar">
-    <input type="text" id="searchInput" placeholder="티커 직접 검색 (예: AAPL, TSLA, 005930.KS, 035720.KQ)" />
-    <button class="btn-apply" id="searchBtn">검색</button>
-    <p class="search-hint">검색하면 차트 · 신호 분석 · 자동 백테스트가 한 번에 나와요. 한국 종목은 <code>.KS</code>(코스피)/<code>.KQ</code>(코스닥) 접미사 필요.</p>
-  </section>
-  <section class="search-result" id="searchResult"></section>
+  <main class="container">
 
-  <section class="market-overview" id="marketOverview">
-    <div class="mo-loading">시장 현황 불러오는 중…</div>
-  </section>
+    <!-- 종목 검색 -->
+    <section class="search-section">
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="종목명 또는 종목코드"
+        autocomplete="off"
+      />
 
-  <section class="breadth-bar" id="breadthBar"></section>
+      <button id="searchBtn">
+        검색
+      </button>
+    </section>
 
-  <main class="scan-section">
-    <div class="scan-col">
-      <h2 class="scan-heading buy-heading">▲ 매수 후보 (신호 상위)</h2>
-      <div class="board" id="buyBoard"></div>
-    </div>
-    <div class="scan-col">
-      <h2 class="scan-heading sell-heading">▼ 매도/주의 후보 (신호 하위)</h2>
-      <div class="board" id="sellBoard"></div>
-    </div>
+    <!-- 실전 계좌 -->
+    <section class="live-account">
+      <div class="section-header">
+        <div>
+          <span class="live-badge">● LIVE</span>
+          <h2>실전 계좌</h2>
+        </div>
+
+        <button id="accountRefreshBtn">
+          계좌 새로고침
+        </button>
+      </div>
+
+      <div id="accountStatus" class="account-status">
+        계좌 정보를 불러오는 중…
+      </div>
+
+      <div id="accountSummary" class="account-summary"></div>
+
+      <div id="accountHoldings" class="account-holdings"></div>
+    </section>
+
+    <!-- 실전 주문 -->
+    <section class="live-order">
+      <div class="section-header">
+        <div>
+          <span class="live-badge">LIVE ORDER</span>
+          <h2>실전 주문</h2>
+        </div>
+      </div>
+
+      <div class="order-warning">
+        ⚠️ 이 주문은 한국투자증권 <strong>실전 계좌</strong>로 전송됩니다.
+      </div>
+
+      <div class="order-grid">
+
+        <select id="orderSide">
+          <option value="buy">매수</option>
+          <option value="sell">매도</option>
+        </select>
+
+        <input
+          id="orderCode"
+          type="text"
+          placeholder="종목코드"
+          autocomplete="off"
+        />
+
+        <input
+          id="orderQuantity"
+          type="number"
+          min="1"
+          step="1"
+          placeholder="수량"
+        />
+
+        <select id="orderType">
+          <option value="market">시장가</option>
+          <option value="limit">지정가</option>
+        </select>
+
+        <input
+          id="orderPrice"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="가격"
+          disabled
+        />
+
+      </div>
+
+      <label class="order-confirm">
+        <input
+          id="orderConfirm"
+          type="checkbox"
+        />
+        실제 실전계좌에 주문을 전송하는 것을 확인했습니다.
+      </label>
+
+      <button
+        id="orderSubmitBtn"
+        class="live-order-button"
+      >
+        실전 주문 전송
+      </button>
+
+      <div
+        id="orderResult"
+        class="order-result"
+      ></div>
+    </section>
+
+    <!-- 기존 분석 영역 -->
+    <section id="analysisSection">
+
+      <div id="signalBoard"></div>
+
+      <div id="chartContainer"></div>
+
+      <div id="newsContainer"></div>
+
+      <div id="backtestContainer"></div>
+
+    </section>
+
   </main>
-
-  <footer class="disclaimer">
-    이 신호는 참고용 분석 결과이며 투자 조언이 아닙니다. "매수 후보"는 설정한 규칙상 점수가 높은 종목일 뿐,
-    매수를 권유하는 것이 아닙니다. 매매 판단과 실행, 그 결과에 대한 책임은 전적으로 본인에게 있습니다.
-  </footer>
 
   <script src="app.js"></script>
 </body>
