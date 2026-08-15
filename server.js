@@ -3,29 +3,26 @@
 // 로컬 개발/테스트용 서버.
 // Vercel에서는 api/ 폴더의 serverless function을 사용한다.
 
-const express =
-  require('express');
+const express = require('express');
+const path = require('path');
 
-const path =
-  require('path');
-
-const app =
-  express();
+const app = express();
 
 const PORT =
   process.env.PORT ||
   3000;
 
 app.use(
-  express.json()
+  express.json({
+    limit: '2mb',
+  })
 );
 
 app.use(
   express.static(
     __dirname,
     {
-      index:
-        'index.html',
+      index: 'index.html',
     }
   )
 );
@@ -67,7 +64,7 @@ function mount(
         );
       } catch (err) {
         console.error(
-          routePath,
+          `[${routePath}]`,
           err
         );
 
@@ -87,10 +84,22 @@ function mount(
   );
 }
 
+/*
+ * ============================================================
+ * MARKET / SEARCH
+ * ============================================================
+ */
+
 mount(
   'get',
-  '/api/scan',
-  './api/scan'
+  '/api/search',
+  './api/search'
+);
+
+mount(
+  'get',
+  '/api/market-news',
+  './api/market-news'
 );
 
 mount(
@@ -101,8 +110,26 @@ mount(
 
 mount(
   'get',
+  '/api/scan',
+  './api/scan'
+);
+
+/*
+ * ============================================================
+ * STOCK ANALYSIS
+ * ============================================================
+ */
+
+mount(
+  'get',
   '/api/signal/:ticker',
   './api/signal/[ticker]'
+);
+
+mount(
+  'get',
+  '/api/chart/:ticker',
+  './api/chart/[ticker]'
 );
 
 mount(
@@ -111,11 +138,29 @@ mount(
   './api/backtest/[ticker]'
 );
 
+/*
+ * ============================================================
+ * KIS / ACCOUNT
+ * ============================================================
+ */
+
 mount(
   'get',
-  '/api/chart/:ticker',
-  './api/chart/[ticker]'
+  '/api/kis/balance',
+  './api/kis/balance'
 );
+
+mount(
+  'post',
+  '/api/kis/order',
+  './api/kis/order'
+);
+
+/*
+ * ============================================================
+ * PUSH
+ * ============================================================
+ */
 
 mount(
   'get',
@@ -135,16 +180,23 @@ mount(
   './api/push/unsubscribe'
 );
 
-// 기존 잘못된 경로:
-// ./api/cron/check-signals
-//
-// 실제 파일:
-// ./cron/check-signals.js
+/*
+ * ============================================================
+ * CRON
+ * ============================================================
+ */
+
 mount(
   'get',
   '/api/cron/check-signals',
   './cron/check-signals'
 );
+
+/*
+ * ============================================================
+ * START
+ * ============================================================
+ */
 
 app.listen(
   PORT,
