@@ -4,16 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#0d1117" />
-
   <title>SIGNAL DESK</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-  >
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -23,7 +18,6 @@
   <!-- =========================================================
        MARKET TAPE
        ========================================================= -->
-
   <div class="tape-wrap">
 
     <div class="tape-label">
@@ -31,25 +25,19 @@
     </div>
 
     <div class="tape">
-
-      <div
-        id="tape"
-        class="tape-inner"
-      >
+      <div id="tape" class="tape-inner">
         <span class="tape-loading">
           시장 데이터를 불러오는 중...
         </span>
       </div>
-
     </div>
 
   </div>
 
 
   <!-- =========================================================
-       HEADER
+       TOP BAR
        ========================================================= -->
-
   <header class="topbar">
 
     <div class="brand">
@@ -71,7 +59,6 @@
       </div>
 
     </div>
-
 
     <div class="topbar-actions">
 
@@ -98,44 +85,24 @@
   <!-- =========================================================
        MAIN
        ========================================================= -->
-
   <main>
 
 
     <!-- =======================================================
          STOCK SEARCH
+         기존 검색 UI 유지
          ======================================================= -->
-
-    <section
-      class="search-section"
-      id="stockSearch"
-    >
+    <section class="search-section">
 
       <div class="search-bar">
 
-        <div class="search-input-wrap">
-
-          <input
-            id="searchInput"
-            type="text"
-            autocomplete="off"
-            spellcheck="false"
-            placeholder="종목명 또는 종목코드 검색"
-            aria-label="종목 검색"
-          />
-
-          <button
-            id="searchClearBtn"
-            class="search-clear"
-            type="button"
-            aria-label="검색어 지우기"
-            hidden
-          >
-            ×
-          </button>
-
-        </div>
-
+        <input
+          id="searchInput"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="종목명 또는 종목코드 검색"
+        />
 
         <button
           id="searchBtn"
@@ -145,60 +112,27 @@
           SEARCH
         </button>
 
-      </div>
-
-
-      <div class="search-hint">
-
-        종목명 또는 코드 입력 · 예:
-
-        <button
-          type="button"
-          class="search-example"
-          data-search-example="삼성전자"
-        >
-          삼성전자
-        </button>
-
-        ,
-
-        <button
-          type="button"
-          class="search-example"
-          data-search-example="005930"
-        >
-          005930
-        </button>
-
-        ,
-
-        <button
-          type="button"
-          class="search-example"
-          data-search-example="NVDA"
-        >
-          NVDA
-        </button>
+        <div class="search-hint">
+          종목명 또는 코드 입력 · 예:
+          <code>삼성전자</code>,
+          <code>005930</code>
+        </div>
 
       </div>
 
 
-      <!-- 검색 결과 / AI 분석 결과 -->
-
+      <!-- 검색 결과 -->
       <div
         id="searchResult"
         class="search-result"
-        aria-live="polite"
       ></div>
 
     </section>
 
 
-
     <!-- =======================================================
          MARKET OVERVIEW
          ======================================================= -->
-
     <section
       id="marketOverview"
       class="market-overview"
@@ -211,59 +145,9 @@
     </section>
 
 
-
-    <!-- =======================================================
-         MARKET REGIME
-         ======================================================= -->
-
-    <section
-      id="marketRegime"
-      class="market-regime-section"
-    >
-
-      <div class="market-regime-header">
-
-        <div>
-
-          <h2 class="section-title">
-            MARKET REGIME
-          </h2>
-
-          <p class="section-subtitle">
-            AI가 현재 시장의 방향성과 위험 환경을 종합 판단합니다.
-          </p>
-
-        </div>
-
-        <span
-          id="marketRegimeBadge"
-          class="regime-badge"
-        >
-          ANALYZING
-        </span>
-
-      </div>
-
-
-      <div
-        id="marketRegimeContent"
-        class="market-regime-content"
-      >
-
-        <div class="account-notice">
-          시장 국면을 분석하는 중...
-        </div>
-
-      </div>
-
-    </section>
-
-
-
     <!-- =======================================================
          MARKET BREADTH
          ======================================================= -->
-
     <section
       id="breadthBar"
       class="breadth-bar"
@@ -273,29 +157,27 @@
         MARKET BREADTH
       </span>
 
-
       <div class="breadth-track">
 
         <div
           id="breadthBuy"
           class="breadth-buy"
-          style="width: 0%"
+          style="width:0%"
         ></div>
 
         <div
           id="breadthHold"
           class="breadth-hold"
-          style="width: 0%"
+          style="width:0%"
         ></div>
 
         <div
           id="breadthSell"
           class="breadth-sell"
-          style="width: 0%"
+          style="width:0%"
         ></div>
 
       </div>
-
 
       <span id="breadthText">
         -
@@ -304,17 +186,16 @@
     </section>
 
 
-
     <!-- =======================================================
          MARKET NEWS
+         주요 시황
          ======================================================= -->
-
     <section
       id="marketNews"
-      class="market-news-section"
+      class="market-news"
     >
 
-      <div class="market-news-header">
+      <div class="news-header">
 
         <div>
 
@@ -322,94 +203,48 @@
             MARKET NEWS
           </h2>
 
-          <p class="market-news-subtitle">
-            주요 시황 · 금리 · 환율 · 반도체 · 글로벌 시장
+          <p class="section-subtitle">
+            주요 시황 및 시장 관련 뉴스
           </p>
 
         </div>
 
-
-        <button
-          id="marketNewsRefresh"
-          class="btn-refresh"
-          type="button"
+        <span
+          id="newsUpdated"
+          class="news-updated"
         >
-          NEWS REFRESH
-        </button>
+          LIVE
+        </span>
 
       </div>
 
 
       <div
-        id="marketNewsList"
-        class="market-news-list"
-        aria-live="polite"
+        id="newsList"
+        class="news-list"
       >
 
-        <div class="account-notice">
-          주요 시황 뉴스를 불러오는 중...
+        <div class="news-loading">
+          주요 시황을 불러오는 중...
         </div>
 
       </div>
 
     </section>
-
-
-
-    <!-- =======================================================
-         AI MARKET SUMMARY
-         ======================================================= -->
-
-    <section
-      id="marketAiSummary"
-      class="market-ai-section"
-    >
-
-      <div class="market-ai-header">
-
-        <div>
-
-          <h2 class="section-title">
-            AI MARKET VIEW
-          </h2>
-
-          <p class="market-news-subtitle">
-            시장 데이터와 주요 시황을 종합한 현재 시장 판단
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div
-        id="marketAiSummaryContent"
-        class="market-ai-content"
-      >
-
-        <div class="account-notice">
-          AI 시장 판단을 준비하는 중...
-        </div>
-
-      </div>
-
-    </section>
-
 
 
     <!-- =======================================================
          BUY / SELL SCAN
          ======================================================= -->
-
     <section class="scan-section">
 
 
+      <!-- BUY -->
       <div class="scan-column">
 
         <h2 class="scan-heading buy-heading">
           BUY CANDIDATES
         </h2>
-
 
         <div
           id="buyBoard"
@@ -429,13 +264,12 @@
       </div>
 
 
-
+      <!-- SELL -->
       <div class="scan-column">
 
         <h2 class="scan-heading sell-heading">
           SELL / WATCH
         </h2>
-
 
         <div
           id="sellBoard"
@@ -454,63 +288,12 @@
 
       </div>
 
-
     </section>
-
-
-
-    <!-- =======================================================
-         SELECTED STOCK AI ANALYSIS
-         ======================================================= -->
-
-    <section
-      id="selectedStockAnalysis"
-      class="selected-stock-section"
-      hidden
-    >
-
-      <div class="selected-stock-header">
-
-        <div>
-
-          <h2 class="section-title">
-            AI STOCK ANALYSIS
-          </h2>
-
-          <p
-            id="selectedStockSubtitle"
-            class="section-subtitle"
-          >
-            -
-          </p>
-
-        </div>
-
-
-        <button
-          id="selectedStockClose"
-          class="btn-refresh"
-          type="button"
-        >
-          CLOSE
-        </button>
-
-      </div>
-
-
-      <div
-        id="selectedStockContent"
-        class="selected-stock-content"
-      ></div>
-
-    </section>
-
 
 
     <!-- =======================================================
          REAL ACCOUNT
          ======================================================= -->
-
     <section
       id="accountSection"
       class="account-section"
@@ -613,20 +396,17 @@
     </section>
 
 
-
     <!-- =======================================================
          BACKTEST
          ======================================================= -->
-
     <section class="backtest-panel">
 
       <h2>
         STRATEGY BACKTEST
       </h2>
 
-
       <p class="hint">
-        현재 Multi-Agent 전략을 과거 데이터에 적용해 성과를 확인합니다.
+        현재 전략을 과거 데이터에 적용해 성과를 확인합니다.
       </p>
 
 
@@ -636,7 +416,6 @@
           id="backtestTicker"
           type="text"
           autocomplete="off"
-          spellcheck="false"
           placeholder="종목코드"
         />
 
@@ -681,15 +460,12 @@
     </section>
 
 
-
   </main>
-
 
 
   <!-- =========================================================
        REAL ORDER MODAL
        ========================================================= -->
-
   <div
     id="orderModal"
     class="modal-overlay"
@@ -697,7 +473,6 @@
   >
 
     <div class="modal">
-
 
       <h3 id="orderTitle">
         REAL ORDER
@@ -755,11 +530,8 @@
 
 
       <div class="order-warning">
-
         실전 계좌에 실제 주문이 전송됩니다.
-
         주문 전 종목·수량·가격을 반드시 확인하세요.
-
       </div>
 
 
@@ -790,29 +562,22 @@
         class="order-success"
       ></div>
 
-
     </div>
 
   </div>
 
 
-
   <!-- =========================================================
        FOOTER
        ========================================================= -->
-
   <footer class="disclaimer">
-
     SIGNAL DESK · REAL MARKET DATA · REAL ACCOUNT
-
   </footer>
-
 
 
   <!-- =========================================================
        APP
        ========================================================= -->
-
   <script src="app.js"></script>
 
 </body>
