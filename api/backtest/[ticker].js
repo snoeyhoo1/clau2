@@ -5,7 +5,7 @@ const {
 } = require('../../lib/backtest');
 
 const {
-  getQuoteAndHistory,
+  getIntradayHistory,
 } = require('../../lib/dataSources');
 
 module.exports = async (
@@ -16,26 +16,36 @@ module.exports = async (
     const {
       ticker,
       range,
+      interval,
     } = req.query;
 
+    /*
+     * 데이트레이딩 백테스트는
+     * Yahoo 장중 데이터 제한을 고려해
+     * 기본 최근 60일 / 30분봉.
+     */
     const selectedRange =
-      range || '2y';
+      range || '60d';
+
+    const selectedInterval =
+      interval || '30m';
 
     const quote =
-      await getQuoteAndHistory(
+      await getIntradayHistory(
         ticker,
-        selectedRange
+        selectedRange,
+        selectedInterval
       );
 
     if (
       !quote.bars ||
-      quote.bars.length < 220
+      quote.bars.length < 120
     ) {
       return res
         .status(400)
         .json({
           error:
-            '퀀트 백테스트에 필요한 데이터가 부족합니다. 최소 220거래일 이상의 데이터가 필요합니다.',
+            '데이트레이딩 백테스트에 필요한 장중 데이터가 부족합니다.',
         });
     }
 
@@ -47,15 +57,22 @@ module.exports = async (
 
     res.status(200).json({
       ticker,
-      range: selectedRange,
+
+      range:
+        selectedRange,
+
+      interval:
+        selectedInterval,
 
       ...result,
 
       dataInfo: {
         bars:
           quote.bars.length,
+
         startDate:
           quote.dates[0],
+
         endDate:
           quote.dates[
             quote.dates.length - 1
@@ -64,7 +81,7 @@ module.exports = async (
     });
   } catch (err) {
     console.error(
-      'Backtest error:',
+      'Intraday backtest error:',
       err
     );
 
@@ -73,7 +90,7 @@ module.exports = async (
       .json({
         error:
           err.message ||
-          '백테스트 실행 실패',
+          '데이트레이딩 백테스트 실행 실패',
       });
   }
 };
