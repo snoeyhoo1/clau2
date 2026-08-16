@@ -14,10 +14,6 @@ const {
   KR_UNIVERSE,
 } = require('../lib/universe');
 
-const {
-  getOrCreate,
-} = require('../lib/scanCache');
-
 function normalizeMarket(
   value
 ) {
@@ -94,36 +90,20 @@ module.exports = async (
     );
 
   try {
-    const {
-      value,
-      cached,
-      deduped,
-    } =
-      await getOrCreate(
-        market,
-        () =>
-          scanUniverse(
-            universe
-          )
+    const result =
+      await scanUniverse(
+        universe
       );
 
     return res.status(200).json({
       ok: true,
 
-      ...value,
+      ...result,
 
       generatedAt:
         new Date().toISOString(),
 
       market,
-
-      cache: {
-        cached:
-          Boolean(cached),
-
-        deduped:
-          Boolean(deduped),
-      },
     });
 
   } catch (err) {
