@@ -8,11 +8,21 @@ const {
   isAuthed,
 } = require('../lib/auth');
 
-module.exports = async (req, res) => {
+module.exports = async (
+  req,
+  res
+) => {
+  res.setHeader(
+    'Cache-Control',
+    'no-store, max-age=0'
+  );
+
   const action =
     String(
       req.query?.action || ''
-    ).toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
 
   if (
     action === 'login'
@@ -21,8 +31,9 @@ module.exports = async (req, res) => {
       req.method !== 'POST'
     ) {
       return res.status(405).json({
+        ok: false,
         error:
-          'POST만 지원',
+          'POST만 지원합니다.',
       });
     }
 
@@ -32,19 +43,24 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         ok: true,
         authRequired: false,
+        authed: true,
       });
     }
 
-    const {
-      password,
-    } = req.body || {};
+    const password =
+      req.body?.password;
 
     if (
-      !checkPassword(password)
+      !checkPassword(
+        password
+      )
     ) {
       return res.status(401).json({
+        ok: false,
         error:
           '비밀번호가 올바르지 않습니다.',
+        authRequired: true,
+        authed: false,
       });
     }
 
@@ -53,6 +69,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       ok: true,
       authRequired: true,
+      authed: true,
     });
   }
 
@@ -63,6 +80,9 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
+      authRequired:
+        isAuthConfigured(),
+      authed: false,
     });
   }
 
@@ -70,6 +90,8 @@ module.exports = async (req, res) => {
     action === 'status'
   ) {
     return res.status(200).json({
+      ok: true,
+
       authRequired:
         isAuthConfigured(),
 
@@ -79,6 +101,8 @@ module.exports = async (req, res) => {
   }
 
   return res.status(404).json({
+    ok: false,
+
     error:
       '지원하지 않는 인증 경로입니다.',
   });
