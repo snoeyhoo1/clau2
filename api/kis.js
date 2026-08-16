@@ -11,6 +11,10 @@ const {
   placeOverseasOrder,
 } = require('../lib/kisClient');
 
+const {
+  calculateLiveQuantity,
+} = require('../lib/positionSizing');
+
 module.exports =
   async (
     req,
@@ -38,6 +42,81 @@ module.exports =
       )
         .trim()
         .toLowerCase();
+
+    if (
+      action === 'sizing'
+    ) {
+      if (
+        req.method !== 'GET'
+      ) {
+        return res.status(405).json({
+          ok: false,
+          error:
+            'GET만 지원합니다.',
+        });
+      }
+
+      try {
+        const market =
+          req.query?.market ===
+          'overseas'
+            ? 'overseas'
+            : 'domestic';
+
+        const entry = Number(
+          req.query?.entry
+        );
+
+        const stop = Number(
+          req.query?.stop
+        );
+
+        let equity = 0;
+
+        if (market === 'overseas') {
+          const overseas =
+            await getOverseasBalance();
+
+          equity = Number(
+            overseas?.cashUsd || 0
+          );
+        } else {
+          const domestic =
+            await getBalance();
+
+          equity = Number(
+            domestic?.orderableCash || 0
+          );
+        }
+
+        const sizing =
+          calculateLiveQuantity({
+            equity,
+            entryPrice: entry,
+            stopPrice: stop,
+          });
+
+        return res.status(200).json({
+          ok: true,
+          market,
+          equity,
+          ...sizing,
+        });
+
+      } catch (err) {
+        console.error(
+          '[api/kis/sizing]',
+          err
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            err?.message ||
+            '추천 수량 계산 실패',
+        });
+      }
+    }
 
     if (
       action === 'balance'
