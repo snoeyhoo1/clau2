@@ -14,57 +14,116 @@ const {
   KR_UNIVERSE,
 } = require('../lib/universe');
 
+const {
+  getOrCreate,
+} = require('../lib/scanCache');
+
+function normalizeMarket(
+  value
+) {
+  const market =
+    String(
+      value || ''
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    market === 'us' ||
+    market === 'kr' ||
+    market === 'all'
+  ) {
+    return market;
+  }
+
+  return 'all';
+}
+
+function selectUniverse(
+  market
+) {
+  if (
+    market === 'us'
+  ) {
+    return US_UNIVERSE;
+  }
+
+  if (
+    market === 'kr'
+  ) {
+    return KR_UNIVERSE;
+  }
+
+  return FULL_UNIVERSE;
+}
+
 module.exports = async (
   req,
   res
 ) => {
-  if (guard(req, res)) return;
+  if (
+    guard(req, res)
+  ) {
+    return;
+  }
+
+  res.setHeader(
+    'Cache-Control',
+    'no-store, max-age=0'
+  );
 
   if (
     req.method !== 'GET'
   ) {
     return res.status(405).json({
+      ok: false,
+
       error:
         'GET만 지원합니다.',
     });
   }
 
+  const market =
+    normalizeMarket(
+      req.query?.market
+    );
+
+  const universe =
+    selectUniverse(
+      market
+    );
+
   try {
-    const market =
-      String(
-        req.query?.market ||
-        ''
-      ).trim().toLowerCase();
-
-    let universe =
-      FULL_UNIVERSE;
-
-    if (
-      market === 'us'
-    ) {
-      universe =
-        US_UNIVERSE;
-    } else if (
-      market === 'kr'
-    ) {
-      universe =
-        KR_UNIVERSE;
-    }
-
-    const result =
-      await scanUniverse(
-        universe
+    const {
+      value,
+      cached,
+      deduped,
+    } =
+      await getOrCreate(
+        market,
+        () =>
+          scanUniverse(
+            universe
+          )
       );
 
     return res.status(200).json({
-      ...result,
+      ok: true,
+
+      ...value,
 
       generatedAt:
         new Date().toISOString(),
 
-      market:
-        market ||
-        'all',
+      market,
+
+      cache: {
+        cached:
+          Boolean(cached),
+
+        deduped:
+          Boolean(deduped),
+      },
     });
 
   } catch (err) {
@@ -74,6 +133,8 @@ module.exports = async (
     );
 
     return res.status(500).json({
+      ok: false,
+
       error:
         err?.message ||
         '스캔 실패',
@@ -81,6 +142,8 @@ module.exports = async (
       type:
         err?.name ||
         'Error',
+
+      market,
     });
   }
 };
