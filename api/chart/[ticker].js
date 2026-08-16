@@ -1,7 +1,10 @@
 // api/chart/[ticker].js
+const { guard } = require('../../lib/auth');
 const { getQuoteAndHistory } = require('../../lib/dataSources');
 
 module.exports = async (req, res) => {
+  if (guard(req, res)) return;
+
   try {
     const { ticker, range } = req.query;
     const quote = await getQuoteAndHistory(ticker, range || '6mo');
