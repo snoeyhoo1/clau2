@@ -1,16 +1,23 @@
 /* style.css */
+/*
+ * SIGNAL DESK — "공항 전광판(split-flap)" 컨셉.
+ * 개별 투자자가 24시간 도는 AI 분석 데스크를 들여다보는 느낌을 준다.
+ * 따뜻한 흑연색 배경 + 인광(phosphor) 앰버 + 브릭레드/올리브 시그널.
+ */
 :root {
-  --bg: #0d1117;
-  --bg-elevated: #141b26;
-  --ink: #e8ecf1;
-  --ink-dim: #7d8a9c;
-  --line: #232d3b;
-  --amber: #e8a94b;
-  --buy: #4bc98a;
-  --sell: #e35c5c;
-  --hold: #7d8a9c;
+  --bg: #14120f;
+  --bg-elevated: #1e1b15;
+  --bg-raised: #262117;
+  --ink: #f2efe7;
+  --ink-dim: #8a8371;
+  --line: #332d20;
+  --amber: #e8a33d;
+  --buy: #8fb25d;
+  --sell: #c1502e;
+  --hold: #6e6a5c;
   --mono: 'JetBrains Mono', monospace;
-  --display: 'Space Grotesk', sans-serif;
+  --display: 'Big Shoulders Display', 'Space Grotesk', sans-serif;
+  --body-font: 'Space Grotesk', sans-serif;
 }
 
 * {
@@ -27,7 +34,7 @@ body {
 
 /* 상단 티커 테이프 */
 .tape-wrap {
-  background: #05070a;
+  background: #0b0a07;
   border-bottom: 1px solid var(--line);
   overflow: hidden;
   white-space: nowrap;
@@ -92,8 +99,22 @@ body {
 }
 
 .brand-mark {
-  color: var(--amber);
-  font-size: 22px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.18);
+  animation: brand-pulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes brand-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(232, 163, 61, 0.06);
+  }
 }
 
 .brand-text h1 {
@@ -364,6 +385,26 @@ body {
   background: var(--bg-elevated);
   padding: 20px;
   position: relative;
+  border-top: 2px solid var(--line);
+  animation: flap-in 0.35s cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
+
+@keyframes flap-in {
+  from {
+    opacity: 0;
+    transform: scaleY(0.94) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .brand-mark {
+    animation: none;
+  }
 }
 
 .card-head {
@@ -920,4 +961,117 @@ body {
     margin-left: 16px;
     margin-right: 16px;
   }
+}
+
+/* =========================================================
+   AUTH GATE
+   ========================================================= */
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-gate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      transparent,
+      transparent 2px,
+      rgba(232, 163, 61, 0.02) 3px
+    );
+  pointer-events: none;
+}
+
+.auth-card {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  background: var(--bg-elevated);
+  border-top: 2px solid var(--amber);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.auth-mark {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.18);
+  animation: brand-pulse 2.4s ease-in-out infinite;
+  margin-bottom: 14px;
+}
+
+.auth-title {
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.auth-subtitle {
+  font-size: 12px;
+  color: var(--ink-dim);
+  margin: 4px 0 20px;
+}
+
+.auth-input {
+  width: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  padding: 12px 14px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.auth-input:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.auth-submit {
+  width: 100%;
+  margin-top: 12px;
+  background: var(--amber);
+  color: #1a1300;
+  border: none;
+  padding: 12px 18px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.auth-submit:hover {
+  filter: brightness(1.1);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-error {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--sell);
 }
