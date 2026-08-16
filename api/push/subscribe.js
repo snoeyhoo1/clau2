@@ -1,4 +1,5 @@
 // api/push/subscribe.js
+const { guard } = require('../../lib/auth');
 const { kv } = require('@vercel/kv');
 const crypto = require('crypto');
 
@@ -7,6 +8,7 @@ function keyFor(endpoint) {
 }
 
 module.exports = async (req, res) => {
+  if (guard(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST만 지원' });
   try {
     const subscription = req.body;
