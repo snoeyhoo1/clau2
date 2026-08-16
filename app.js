@@ -6,6 +6,16 @@
 // 검색 → AI 분석 → 차트 → 백테스트
 // 시장 현황 → 뉴스 → 스캔 → breadth
 //
+// 안정화:
+// - 검색 / AI / 차트를 서로 독립적으로 처리
+// - AI 실패 시에도 차트 표시
+// - 차트 실패 시에도 AI 결과 표시
+// - 검색 결과에서 백테스트 연결 유지
+// - 뉴스 / 시장현황 / 스캔 개별 실패 허용
+// - 중복 이벤트 등록 방지
+// - 외부 뉴스 링크 안전성 강화
+// - 숫자/배열/null 응답 방어
+//
 
 /* ============================================================
  * SERVICE WORKER
@@ -235,6 +245,42 @@ function escapeHtml(value) {
 }
 
 
+/*
+ * 뉴스 링크는 HTML escape만으로
+ * javascript: 같은 scheme까지 막을 수 없다.
+ *
+ * 실제 RSS 링크만 허용하고
+ * 이상한 URL은 #으로 처리한다.
+ */
+function safeExternalUrl(value) {
+  const raw =
+    String(value || '').trim();
+
+  if (!raw) {
+    return '#';
+  }
+
+  try {
+    const url =
+      new URL(
+        raw,
+        window.location.origin
+      );
+
+    if (
+      url.protocol !== 'http:' &&
+      url.protocol !== 'https:'
+    ) {
+      return '#';
+    }
+
+    return url.href;
+  } catch {
+    return '#';
+  }
+}
+
+
 function signalClass(item) {
   if (
     item?.aiStrategy?.signal === 1 ||
@@ -358,6 +404,7 @@ function renderMarketNews(articles) {
         현재 표시할 주요 시황 뉴스가 없습니다.
       </div>
     `;
+
     return;
   }
 
@@ -371,8 +418,9 @@ function renderMarketNews(articles) {
           '제목 없음';
 
         const link =
-          article?.link ||
-          '#';
+          safeExternalUrl(
+            article?.link
+          );
 
         return `
           <article class="market-news-item">
@@ -434,6 +482,7 @@ async function loadMarketNews() {
 
   if (newsRefresh) {
     newsRefresh.disabled = true;
+
     newsRefresh.textContent =
       'LOADING...';
   }
@@ -457,8 +506,9 @@ async function loadMarketNews() {
       await safeJson(response);
 
     renderMarketNews(
-      data.articles
+      data?.articles
     );
+
   } catch (error) {
     console.error(
       '[market news]',
@@ -474,9 +524,11 @@ async function loadMarketNews() {
         )}
       </div>
     `;
+
   } finally {
     if (newsRefresh) {
       newsRefresh.disabled = false;
+
       newsRefresh.textContent =
         'NEWS REFRESH';
     }
@@ -764,6 +816,7 @@ function renderUpProbability(up) {
   const horizons =
     Object.keys(up.byHorizon)
       .map(Number)
+      .filter(Number.isFinite)
       .sort(
         (a, b) => a - b
       );
@@ -796,6 +849,7 @@ function renderUpProbability(up) {
                 <span>
                   ${horizon}거래일
                 </span>
+
                 <span>
                   데이터 부족
                 </span>
@@ -811,12 +865,16 @@ function renderUpProbability(up) {
               </span>
 
               <strong>
-                ${data.probability}%
+                ${escapeHtml(
+                  data.probability
+                )}%
               </strong>
 
               <span>
                 평균
-                ${data.avgReturnPct}%
+                ${escapeHtml(
+                  data.avgReturnPct
+                )}%
               </span>
 
             </div>
@@ -924,7 +982,9 @@ function renderCard(item) {
         )}
       </div>
 
-      <div class="signal-badge signal-${barClass}">
+      <div
+        class="signal-badge signal-${barClass}"
+      >
         ${escapeHtml(
           signalText(item)
         )}
@@ -1009,6 +1069,7 @@ function renderTape(ranked) {
   if (!valid.length) {
     tape.innerHTML =
       '<span>데이터 없음</span>';
+
     return;
   }
 
@@ -1143,6 +1204,16 @@ function renderMarketOverview(indices) {
       ? indices
       : [];
 
+  if (!list.length) {
+    marketOverview.innerHTML = `
+      <div class="mo-loading">
+        시장 데이터가 없습니다.
+      </div>
+    `;
+
+    return;
+  }
+
   marketOverview.innerHTML =
     list
       .map(index => {
@@ -1219,8 +1290,9 @@ async function loadMarketOverview() {
       await safeJson(response);
 
     renderMarketOverview(
-      data.indices
+      data?.indices
     );
+
   } catch (error) {
     console.error(
       '[market overview]',
@@ -1356,6 +1428,7 @@ async function loadScan() {
           )
         }`;
     }
+
   } catch (error) {
     console.error(
       '[scan]',
@@ -1377,6 +1450,20 @@ async function loadScan() {
         </div>
       `;
     }
+
+    if (sellBoard) {
+      sellBoard.innerHTML = `
+        <div
+          style="
+            padding:32px;
+            color:var(--ink-dim)
+          "
+        >
+          스캔 데이터를 불러오지 못했습니다.
+        </div>
+      `;
+    }
+
   } finally {
     loading = false;
   }
@@ -1500,6 +1587,7 @@ async function searchStocks() {
 
   if (searchBtn) {
     searchBtn.disabled = true;
+
     searchBtn.textContent =
       'SEARCHING...';
   }
@@ -1527,8 +1615,9 @@ async function searchStocks() {
       await safeJson(response);
 
     renderSearchResults(
-      data.results
+      data?.results
     );
+
   } catch (error) {
     console.error(
       '[stock search]',
@@ -1546,9 +1635,11 @@ async function searchStocks() {
         </div>
       `;
     }
+
   } finally {
     if (searchBtn) {
       searchBtn.disabled = false;
+
       searchBtn.textContent =
         'SEARCH';
     }
@@ -1821,6 +1912,7 @@ async function loadSearchChart(
         data?.dates,
         data?.closes
       );
+
   } catch (error) {
     console.error(
       '[chart]',
@@ -1871,6 +1963,15 @@ function renderSearchBacktest(result) {
       ? 'change-up'
       : 'change-down';
 
+  const profitFactor =
+    result.profitFactor === null ||
+    result.profitFactor === undefined
+      ? '—'
+      : formatNumber(
+          result.profitFactor,
+          2
+        );
+
   return `
     <div class="search-backtest-result">
 
@@ -1915,16 +2016,7 @@ function renderSearchBacktest(result) {
         <div>
           <span>PROFIT FACTOR</span>
           <strong>
-            ${
-              result.profitFactor ===
-                null ||
-              result.profitFactor ===
-                undefined
-                ? '—'
-                : num(
-                    result.profitFactor
-                  ).toFixed(2)
-            }
+            ${profitFactor}
           </strong>
         </div>
 
@@ -1966,6 +2058,20 @@ function renderSearchBacktest(result) {
         )} bars
       </div>
 
+      ${
+        result.rangeAdjusted
+          ? `
+            <div
+              class="search-backtest-meta"
+            >
+              요청한 범위보다 Yahoo Finance
+              장중 데이터 제한에 맞춰
+              실제 사용 범위가 조정되었습니다.
+            </div>
+          `
+          : ''
+      }
+
     </div>
   `;
 }
@@ -1981,7 +2087,8 @@ function getBacktestConfig() {
    * 엔진이 안정적으로 사용하는 30m 데이터는
    * 60d 범위로 고정한다.
    *
-   * select의 1y/2y/3y/5y는 UI 호환을 유지한다.
+   * select의 1y/2y/3y/5y는
+   * UI 호환을 유지한다.
    */
   return {
     range: '60d',
@@ -2034,6 +2141,7 @@ async function runSearchBacktest(
       renderSearchBacktest(
         data
       );
+
   } catch (error) {
     console.error(
       '[search backtest]',
@@ -2054,6 +2162,23 @@ async function runSearchBacktest(
 
 /* ============================================================
  * SEARCH ANALYSIS
+ *
+ * 핵심 수정:
+ *
+ * 기존:
+ * Promise.all([
+ *   signal,
+ *   chart
+ * ])
+ *
+ * 문제:
+ * signal 하나만 실패해도
+ * chart 결과까지 버려짐.
+ *
+ * 수정:
+ * Promise.allSettled()
+ *
+ * → AI 실패와 차트 실패를 독립적으로 표시.
  * ============================================================ */
 
 async function analyzeSearchedStock(
@@ -2067,7 +2192,9 @@ async function analyzeSearchedStock(
   const safeTicker =
     String(
       ticker || ''
-    ).trim();
+    )
+      .trim()
+      .toUpperCase();
 
   const safeLabel =
     String(
@@ -2117,15 +2244,12 @@ async function analyzeSearchedStock(
     </div>
   `;
 
-  try {
-    /*
-     * 검색한 종목에 대해
-     * AI + 차트를 동시에 가져온다.
-     */
-    const [
-      signalResponse,
-      chartResponse
-    ] = await Promise.all([
+  /*
+   * 검색한 종목의 AI와 차트를
+   * 서로 독립적으로 요청한다.
+   */
+  const results =
+    await Promise.allSettled([
       fetch(
         `/api/signal/${encodeURIComponent(
           safeTicker
@@ -2147,289 +2271,387 @@ async function analyzeSearchedStock(
       )
     ]);
 
-    const signalData =
-      await safeJson(
-        signalResponse
-      );
+  /*
+   * --------------------------
+   * AI 결과
+   * --------------------------
+   */
 
-    let chartData = null;
-    let chartError = '';
+  let signalData = null;
+  let signalError = '';
 
+  const signalRequest =
+    results[0];
+
+  if (
+    signalRequest?.status ===
+    'fulfilled'
+  ) {
+    try {
+      signalData =
+        await safeJson(
+          signalRequest.value
+        );
+    } catch (error) {
+      signalError =
+        error.message;
+    }
+  } else {
+    signalError =
+      signalRequest?.reason?.message ||
+      'AI 분석 요청 실패';
+  }
+
+  /*
+   * --------------------------
+   * Chart 결과
+   * --------------------------
+   */
+
+  let chartData = null;
+  let chartError = '';
+
+  const chartRequest =
+    results[1];
+
+  if (
+    chartRequest?.status ===
+    'fulfilled'
+  ) {
     try {
       chartData =
         await safeJson(
-          chartResponse
+          chartRequest.value
         );
     } catch (error) {
       chartError =
         error.message;
     }
+  } else {
+    chartError =
+      chartRequest?.reason?.message ||
+      '차트 요청 실패';
+  }
 
-    const signal =
-      num(signalData?.signal);
+  /*
+   * --------------------------
+   * AI 데이터 정리
+   * --------------------------
+   */
 
-    const confidence =
-      num(
-        signalData?.confidence
-      );
+  const signal =
+    signalData
+      ? num(
+          signalData?.signal
+        )
+      : 0;
 
-    const strength =
-      num(
-        signalData?.strength
-      );
+  const confidence =
+    signalData
+      ? num(
+          signalData?.confidence
+        )
+      : 0;
 
-    const regime =
-      signalData?.regime ||
-      'UNKNOWN';
+  const strength =
+    signalData
+      ? num(
+          signalData?.strength
+        )
+      : 0;
 
-    const reason =
-      signalData?.reason ||
-      '판단 이유 없음';
+  const regime =
+    signalData?.regime ||
+    'UNKNOWN';
 
-    const decision =
-      decisionText(signal);
+  const reason =
+    signalData?.reason ||
+    (
+      signalError
+        ? 'AI 분석 결과를 가져오지 못했습니다.'
+        : '판단 이유 없음'
+    );
 
-    const decisionCls =
-      decisionClass(signal);
+  const decision =
+    decisionText(
+      signal
+    );
 
-    searchResult.innerHTML = `
-      <div class="search-analysis">
+  const decisionCls =
+    decisionClass(
+      signal
+    );
 
-        <div
-          class="search-analysis-header"
+  /*
+   * --------------------------
+   * 분석 화면
+   * --------------------------
+   */
+
+  searchResult.innerHTML = `
+    <div class="search-analysis">
+
+      <div
+        class="search-analysis-header"
+      >
+
+        <div>
+
+          <strong>
+            ${escapeHtml(
+              safeLabel
+            )}
+          </strong>
+
+          <small>
+            ${escapeHtml(
+              safeTicker
+            )}
+          </small>
+
+        </div>
+
+        <span
+          class="
+            signal-badge
+            signal-${decisionCls}
+          "
         >
+          ${decision}
+        </span>
 
-          <div>
+      </div>
 
-            <strong>
-              ${escapeHtml(
-                safeLabel
-              )}
-            </strong>
 
-            <small>
-              ${escapeHtml(
-                safeTicker
-              )}
-            </small>
+      <div
+        class="search-analysis-grid"
+      >
 
-          </div>
-
-          <span
-            class="
-              signal-badge
-              signal-${decisionCls}
-            "
-          >
-            ${decision}
+        <div>
+          <span>
+            AI SCORE
           </span>
 
+          <strong>
+            ${
+              signalData
+                ? strength.toFixed(1)
+                : '—'
+            }
+          </strong>
         </div>
 
 
-        <div
-          class="search-analysis-grid"
-        >
+        <div>
+          <span>
+            CONFIDENCE
+          </span>
 
-          <div>
-            <span>
-              AI SCORE
-            </span>
-
-            <strong>
-              ${strength.toFixed(1)}
-            </strong>
-          </div>
-
-          <div>
-            <span>
-              CONFIDENCE
-            </span>
-
-            <strong>
-              ${confidence.toFixed(1)}%
-            </strong>
-          </div>
-
-          <div>
-            <span>
-              REGIME
-            </span>
-
-            <strong>
-              ${escapeHtml(
-                regime
-              )}
-            </strong>
-          </div>
-
+          <strong>
+            ${
+              signalData
+                ? confidence.toFixed(1) + '%'
+                : '—'
+            }
+          </strong>
         </div>
 
 
-        <div
-          class="search-analysis-reason"
-        >
-          ${escapeHtml(
-            reason
-          )}
-        </div>
+        <div>
+          <span>
+            REGIME
+          </span>
 
-
-        <div
-          id="searchedStockChart"
-        >
-
-          ${
-            chartData
-              ? renderPriceChart(
-                  chartData?.dates,
-                  chartData?.closes
-                )
-              : `
-                <div
-                  class="search-error"
-                >
-                  차트를 불러오지 못했습니다.
-                  <br>
-                  ${escapeHtml(
-                    chartError ||
-                    '차트 데이터 없음'
-                  )}
-                </div>
-              `
-          }
-
-        </div>
-
-
-        <div
-          class="searched-stock-actions"
-        >
-
-          <button
-            type="button"
-            id="searchedBacktestBtn"
-            class="btn-apply"
-          >
-            RUN BACKTEST
-          </button>
-
-          <button
-            type="button"
-            id="searchBackBtn"
-            class="btn-refresh"
-          >
-            ← 검색 결과
-          </button>
-
-        </div>
-
-
-        <div
-          id="searchedStockBacktest"
-        ></div>
-
-
-        <div
-          class="search-analysis-footer"
-        >
-
-          <button
-            type="button"
-            id="searchRefreshAnalysisBtn"
-            class="btn-refresh"
-          >
-            REFRESH ANALYSIS
-          </button>
-
+          <strong>
+            ${escapeHtml(
+              regime
+            )}
+          </strong>
         </div>
 
       </div>
-    `;
 
-    /*
-     * 검색한 종목을
-     * 아래 백테스트 입력에도 자동 입력.
-     */
-    if (backtestTicker) {
-      backtestTicker.value =
-        safeTicker;
-    }
 
-    document
-      .getElementById(
-        'searchedBacktestBtn'
-      )
-      ?.addEventListener(
-        'click',
-        () =>
-          runSearchBacktest(
-            safeTicker
-          )
-      );
+      ${
+        signalError
+          ? `
+            <div
+              class="search-error"
+              style="margin-top:12px"
+            >
+              AI 분석:
+              ${escapeHtml(
+                signalError
+              )}
+            </div>
+          `
+          : ''
+      }
 
-    document
-      .getElementById(
-        'searchBackBtn'
-      )
-      ?.addEventListener(
-        'click',
-        searchStocks
-      );
 
-    document
-      .getElementById(
-        'searchRefreshAnalysisBtn'
-      )
-      ?.addEventListener(
-        'click',
-        () =>
-          analyzeSearchedStock(
-            safeTicker,
-            safeLabel
-          )
-      );
-
-  } catch (error) {
-    console.error(
-      '[searched stock analysis]',
-      error
-    );
-
-    searchResult.innerHTML = `
-      <div class="search-error">
-
-        분석 실패:
+      <div
+        class="search-analysis-reason"
+      >
         ${escapeHtml(
-          error.message
+          reason
         )}
+      </div>
 
-        <br><br>
+
+      <div
+        id="searchedStockChart"
+      >
+
+        ${
+          chartData
+            ? renderPriceChart(
+                chartData?.dates,
+                chartData?.closes
+              )
+            : `
+              <div
+                class="search-error"
+              >
+                차트를 불러오지 못했습니다.
+                <br>
+                ${escapeHtml(
+                  chartError ||
+                  '차트 데이터 없음'
+                )}
+
+                <br><br>
+
+                <button
+                  type="button"
+                  id="searchChartRetryBtn"
+                  class="btn-refresh"
+                >
+                  RETRY CHART
+                </button>
+              </div>
+            `
+        }
+
+      </div>
+
+
+      <div
+        class="searched-stock-actions"
+      >
 
         <button
           type="button"
-          id="searchRetryBtn"
+          id="searchedBacktestBtn"
+          class="btn-apply"
+        >
+          RUN BACKTEST
+        </button>
+
+        <button
+          type="button"
+          id="searchBackBtn"
           class="btn-refresh"
         >
-          다시 분석
+          ← 검색 결과
         </button>
 
       </div>
-    `;
 
-    document
-      .getElementById(
-        'searchRetryBtn'
-      )
-      ?.addEventListener(
-        'click',
-        () =>
-          analyzeSearchedStock(
-            safeTicker,
-            safeLabel
-          )
-      );
+
+      <div
+        id="searchedStockBacktest"
+      ></div>
+
+
+      <div
+        class="search-analysis-footer"
+      >
+
+        <button
+          type="button"
+          id="searchRefreshAnalysisBtn"
+          class="btn-refresh"
+        >
+          REFRESH ANALYSIS
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+
+  /*
+   * 검색한 종목을
+   * 아래 백테스트 입력에도 자동 입력.
+   */
+  if (backtestTicker) {
+    backtestTicker.value =
+      safeTicker;
   }
+
+
+  /*
+   * 백테스트
+   */
+  document
+    .getElementById(
+      'searchedBacktestBtn'
+    )
+    ?.addEventListener(
+      'click',
+      () =>
+        runSearchBacktest(
+          safeTicker
+        )
+    );
+
+
+  /*
+   * 검색 결과로 돌아가기
+   */
+  document
+    .getElementById(
+      'searchBackBtn'
+    )
+    ?.addEventListener(
+      'click',
+      searchStocks
+    );
+
+
+  /*
+   * AI 재분석
+   */
+  document
+    .getElementById(
+      'searchRefreshAnalysisBtn'
+    )
+    ?.addEventListener(
+      'click',
+      () =>
+        analyzeSearchedStock(
+          safeTicker,
+          safeLabel
+        )
+    );
+
+
+  /*
+   * 차트 재시도
+   */
+  document
+    .getElementById(
+      'searchChartRetryBtn'
+    )
+    ?.addEventListener(
+      'click',
+      () =>
+        analyzeSearchedStock(
+          safeTicker,
+          safeLabel
+        )
+    );
 }
 
 
@@ -2446,7 +2668,9 @@ async function runGlobalBacktest() {
   }
 
   const ticker =
-    backtestTicker.value.trim();
+    backtestTicker.value
+      .trim()
+      .toUpperCase();
 
   if (!ticker) {
     backtestResult.innerHTML = `
@@ -2460,6 +2684,7 @@ async function runGlobalBacktest() {
 
   if (backtestBtn) {
     backtestBtn.disabled = true;
+
     backtestBtn.textContent =
       'RUNNING...';
   }
@@ -2495,6 +2720,7 @@ async function runGlobalBacktest() {
       renderSearchBacktest(
         data
       );
+
   } catch (error) {
     console.error(
       '[global backtest]',
@@ -2509,9 +2735,12 @@ async function runGlobalBacktest() {
         )}
       </div>
     `;
+
   } finally {
     if (backtestBtn) {
-      backtestBtn.disabled = false;
+      backtestBtn.disabled =
+        false;
+
       backtestBtn.textContent =
         'RUN BACKTEST';
     }
@@ -2650,16 +2879,14 @@ function renderAccount(data) {
 
 
 async function loadAccount() {
-  /*
-   * 현재 index.html에 계좌 영역이 있더라도
-   * API가 없는 환경에서는 전체 앱이 깨지지 않도록 한다.
-   */
   const endpoints = [
     '/api/account',
     '/api/account/summary'
   ];
 
-  for (const endpoint of endpoints) {
+  for (
+    const endpoint of endpoints
+  ) {
     try {
       const response =
         await fetch(
@@ -2682,6 +2909,7 @@ async function loadAccount() {
       );
 
       return;
+
     } catch {
       continue;
     }
@@ -2715,6 +2943,7 @@ if (searchInput) {
         'Enter'
       ) {
         event.preventDefault();
+
         searchStocks();
       }
     }
@@ -2742,7 +2971,7 @@ if (refreshBtn) {
   refreshBtn.addEventListener(
     'click',
     async () => {
-      await Promise.all([
+      await Promise.allSettled([
         loadMarketOverview(),
         loadScan(),
         loadMarketNews(),
@@ -2802,11 +3031,13 @@ async function checkAuthAndStart() {
       status.authed
     ) {
       startApp();
+
       return;
     }
 
     if (authGate) {
-      authGate.hidden = false;
+      authGate.hidden =
+        false;
     }
 
     authPassword?.focus();
@@ -2843,15 +3074,18 @@ authForm?.addEventListener(
           '/api/auth/login',
           {
             method: 'POST',
+
             headers: {
               'Content-Type':
                 'application/json'
             },
-            body: JSON.stringify({
-              password:
-                authPassword?.value ||
-                ''
-            })
+
+            body:
+              JSON.stringify({
+                password:
+                  authPassword?.value ||
+                  ''
+              })
           }
         );
 
@@ -2866,7 +3100,8 @@ authForm?.addEventListener(
       }
 
       if (authGate) {
-        authGate.hidden = true;
+        authGate.hidden =
+          true;
       }
 
       startApp();
@@ -2880,6 +3115,7 @@ authForm?.addEventListener(
         authError.hidden =
           false;
       }
+
     } finally {
       if (authSubmit) {
         authSubmit.disabled =
@@ -2930,12 +3166,17 @@ function startApp() {
       if (authPassword) {
         authPassword.value =
           '';
+
         authPassword.focus();
       }
     }
   );
 
-  Promise.all([
+  /*
+   * 하나가 실패해도
+   * 나머지 시장 데이터는 계속 로딩한다.
+   */
+  Promise.allSettled([
     loadMarketOverview(),
     loadScan(),
     loadMarketNews(),
