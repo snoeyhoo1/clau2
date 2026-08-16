@@ -22,14 +22,36 @@ module.exports =
       return;
     }
 
+    res.setHeader(
+      'Cache-Control',
+      'no-store, max-age=0'
+    );
+
+    res.setHeader(
+      'X-Content-Type-Options',
+      'nosniff'
+    );
+
     const action =
       String(
         req.query?.action || ''
-      ).toLowerCase();
+      )
+        .trim()
+        .toLowerCase();
 
     if (
       action === 'balance'
     ) {
+      if (
+        req.method !== 'GET'
+      ) {
+        return res.status(405).json({
+          ok: false,
+          error:
+            'GET만 지원합니다.',
+        });
+      }
+
       try {
         const [
           domesticResult,
@@ -64,22 +86,53 @@ module.exports =
                   '해외 계좌 조회 실패',
               };
 
+        const domesticOk =
+          !domestic.error;
+
+        const overseasOk =
+          !overseas.error;
+
         return res.status(200).json({
+          ok:
+            domesticOk ||
+            overseasOk,
+
           domestic,
+
           overseas,
 
           accountConnected:
-            !domestic.error ||
-            !overseas.error,
+            domesticOk ||
+            overseasOk,
+
+          status: {
+            domestic:
+              domesticOk,
+
+            overseas:
+              overseasOk,
+          },
 
           env:
             'real',
         });
+
       } catch (err) {
+        console.error(
+          '[api/kis/balance]',
+          err
+        );
+
         return res.status(500).json({
+          ok: false,
+
           error:
             err?.message ||
             '계좌 조회 중 알 수 없는 오류',
+
+          type:
+            err?.name ||
+            'Error',
         });
       }
     }
@@ -91,8 +144,9 @@ module.exports =
         req.method !== 'POST'
       ) {
         return res.status(405).json({
+          ok: false,
           error:
-            'POST만 지원',
+            'POST만 지원합니다.',
         });
       }
 
@@ -108,6 +162,30 @@ module.exports =
           confirm,
         } =
           req.body || {};
+
+        if (
+          !code ||
+          !quantity ||
+          Number(
+            quantity
+          ) <= 0
+        ) {
+          return res.status(400).json({
+            ok: false,
+            error:
+              '종목 코드와 유효한 주문 수량이 필요합니다.',
+          });
+        }
+
+        if (
+          !side
+        ) {
+          return res.status(400).json({
+            ok: false,
+            error:
+              '주문 방향이 필요합니다.',
+          });
+        }
 
         let result;
 
@@ -162,19 +240,35 @@ module.exports =
             });
         }
 
-        return res.status(200).json(
-          result
-        );
+        return res.status(200).json({
+          ok: true,
+
+          ...result,
+        });
+
       } catch (err) {
+        console.error(
+          '[api/kis/order]',
+          err
+        );
+
         return res.status(400).json({
+          ok: false,
+
           error:
             err?.message ||
             '주문 처리 실패',
+
+          type:
+            err?.name ||
+            'Error',
         });
       }
     }
 
     return res.status(404).json({
+      ok: false,
+
       error:
         '지원하지 않는 KIS 경로입니다.',
     });
