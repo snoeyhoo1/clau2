@@ -485,7 +485,40 @@
 
     </section>
 
+
+    <!-- =========================================================
+         AI SIGNAL TRACK RECORD
+         ========================================================= -->
+
+    <section
+      id="signalTrackSection"
+      class="account-section"
+    >
+
+      <h2 class="section-title">
+        AI 적중률
+
+        <span class="env-badge env-real">
+          TRACK RECORD
+        </span>
+      </h2>
+
+      <div
+        id="signalTrackNotice"
+        class="account-notice"
+      >
+        검증 데이터를 불러오는 중...
+      </div>
+
+      <div
+        id="signalTrackSummary"
+        class="account-summary"
+      ></div>
+
+    </section>
+
   </main>
+
 
 
   <!-- =========================================================
@@ -505,6 +538,12 @@
       </h3>
 
 
+      <div
+        id="orderInfo"
+        class="order-info"
+      ></div>
+
+
       <div class="order-field">
 
         <label for="orderTicker">
@@ -516,6 +555,7 @@
           type="text"
           inputmode="numeric"
           autocomplete="off"
+          readonly
         />
 
       </div>
@@ -525,6 +565,7 @@
 
         <label for="orderQuantity">
           주문 수량
+          <span id="orderQuantityHint"></span>
         </label>
 
         <input
@@ -558,6 +599,7 @@
       <div class="order-warning">
         실전 계좌에 실제 주문이 전송됩니다.
         주문 전 종목·수량·가격을 반드시 확인하세요.
+        추천 수량은 참고용이며 최종 책임은 본인에게 있습니다.
       </div>
 
 
