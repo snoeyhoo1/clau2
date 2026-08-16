@@ -14,6 +14,9 @@ const {
   KR_UNIVERSE,
 } = require('../lib/universe');
 
+const inFlightScans =
+  new Map();
+
 function normalizeMarket(
   value
 ) {
@@ -53,6 +56,52 @@ function selectUniverse(
   return FULL_UNIVERSE;
 }
 
+function createScan(
+  market,
+  universe
+) {
+  const existing =
+    inFlightScans.get(
+      market
+    );
+
+  if (existing) {
+    return {
+      promise: existing,
+      deduped: true,
+    };
+  }
+
+  const promise =
+    Promise.resolve()
+      .then(() =>
+        scanUniverse(
+          universe
+        )
+      )
+      .finally(() => {
+        if (
+          inFlightScans.get(
+            market
+          ) === promise
+        ) {
+          inFlightScans.delete(
+            market
+          );
+        }
+      });
+
+  inFlightScans.set(
+    market,
+    promise
+  );
+
+  return {
+    promise,
+    deduped: false,
+  };
+}
+
 module.exports = async (
   req,
   res
@@ -90,10 +139,17 @@ module.exports = async (
     );
 
   try {
-    const result =
-      await scanUniverse(
+    const {
+      promise,
+      deduped,
+    } =
+      createScan(
+        market,
         universe
       );
+
+    const result =
+      await promise;
 
     return res.status(200).json({
       ok: true,
@@ -104,6 +160,10 @@ module.exports = async (
         new Date().toISOString(),
 
       market,
+
+      scan: {
+        deduped,
+      },
     });
 
   } catch (err) {
