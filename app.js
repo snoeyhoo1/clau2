@@ -137,6 +137,33 @@ let loading = false;
  * ============================================================
  */
 
+// 서버가 500/크래시 등으로 JSON이 아닌 응답(HTML 오류 페이지 등)을
+// 돌려줄 때 "Unexpected token ... is not valid JSON" 같은 원인
+// 모를 오류 대신, 사람이 이해할 수 있는 메시지를 던진다.
+async function safeJson(response) {
+  const text = await response.text();
+
+  let data;
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (err) {
+    throw new Error(
+      `서버 응답 오류 (HTTP ${response.status}). ` +
+      `잠시 후 다시 시도해주세요.`
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+      `요청 실패 (HTTP ${response.status})`
+    );
+  }
+
+  return data;
+}
+
 function num(
   value,
   fallback = 0
@@ -1449,10 +1476,9 @@ async function loadScan() {
       );
 
     const data =
-      await response.json();
+      await safeJson(response);
 
     if (
-      !response.ok ||
       data.error
     ) {
       throw new Error(
@@ -2950,6 +2976,22 @@ let appStarted = false;
 function startApp() {
   if (appStarted) return;
   appStarted = true;
+
+  const logoutBtn =
+    document.getElementById('logoutBtn');
+
+  logoutBtn?.addEventListener('click', async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      // 무시하고 어차피 화면은 잠근다.
+    }
+
+    appStarted = false;
+    authGate.hidden = false;
+    authPassword.value = '';
+    authPassword.focus();
+  });
 
   Promise.all([
     loadMarketOverview(),
