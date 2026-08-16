@@ -1,11 +1,15 @@
 // api/kis/order.js
 
+const { guard } = require('../../lib/auth');
+
 const {
   placeOrder,
   placeOverseasOrder,
 } = require('../../lib/kisClient');
 
 module.exports = async (req, res) => {
+  if (guard(req, res)) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({
       error: 'POST만 지원',

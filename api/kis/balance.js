@@ -1,11 +1,15 @@
 // api/kis/balance.js
 
+const { guard } = require('../../lib/auth');
+
 const {
   getBalance,
   getOverseasBalance,
 } = require('../../lib/kisClient');
 
 module.exports = async (req, res) => {
+  if (guard(req, res)) return;
+
   try {
     const [
       domesticResult,
