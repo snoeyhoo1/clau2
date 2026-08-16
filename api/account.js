@@ -25,14 +25,30 @@ module.exports = async (
   req,
   res
 ) => {
-  if (guard(req, res)) return;
+  if (
+    guard(req, res)
+  ) {
+    return;
+  }
+
+  res.setHeader(
+    'Cache-Control',
+    'no-store, max-age=0'
+  );
+
+  res.setHeader(
+    'X-Content-Type-Options',
+    'nosniff'
+  );
 
   if (
     req.method !== 'GET'
   ) {
     return res.status(405).json({
+      ok: false,
+
       error:
-        'GET만 지원',
+        'GET만 지원합니다.',
     });
   }
 
@@ -151,6 +167,10 @@ module.exports = async (
       !overseas.error;
 
     return res.status(200).json({
+      ok:
+        domesticConnected ||
+        overseasConnected,
+
       env:
         'real',
 
@@ -158,10 +178,6 @@ module.exports = async (
         domesticConnected ||
         overseasConnected,
 
-      /*
-       * 현재 화면의 기본 자산 표시값은
-       * 환율을 임의 적용하지 않고 국내 계좌 기준으로 표시한다.
-       */
       totalValue:
         domesticTotal,
 
@@ -226,7 +242,19 @@ module.exports = async (
           overseas.error ||
           null,
       },
+
+      status: {
+        domestic:
+          domesticConnected,
+
+        overseas:
+          overseasConnected,
+      },
+
+      generatedAt:
+        new Date().toISOString(),
     });
+
   } catch (err) {
     console.error(
       '[api/account]',
@@ -234,9 +262,15 @@ module.exports = async (
     );
 
     return res.status(500).json({
+      ok: false,
+
       error:
         err?.message ||
         '계좌 조회 중 알 수 없는 오류',
+
+      type:
+        err?.name ||
+        'Error',
     });
   }
 };
