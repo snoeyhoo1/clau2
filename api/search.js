@@ -1,12 +1,13 @@
 // api/search.js
 //
 // 종목명 / 종목코드 검색
-// Yahoo Finance Search API 사용
+// Yahoo Finance Search API
 //
-// 예:
 // /api/search?q=삼성전자
 // /api/search?q=005930
 // /api/search?q=NVDA
+
+const { guard } = require('../lib/auth');
 
 const SEARCH_URL =
   'https://query1.finance.yahoo.com/v1/finance/search';
@@ -22,6 +23,7 @@ const FALLBACK_UNIVERSE = [
   { ticker: '207940.KS', label: '삼성바이오로직스' },
   { ticker: '068270.KS', label: '셀트리온' },
   { ticker: '005490.KS', label: 'POSCO홀딩스' },
+
   { ticker: 'AAPL', label: '애플' },
   { ticker: 'MSFT', label: '마이크로소프트' },
   { ticker: 'NVDA', label: '엔비디아' },
@@ -133,11 +135,11 @@ module.exports = async (
         )
           ? data.quotes
               .filter(
-                (item) =>
+                item =>
                   item.quoteType ===
                   'EQUITY'
               )
-              .map((item) => ({
+              .map(item => ({
                 ticker:
                   normalizeSymbol(
                     item.symbol
@@ -165,7 +167,7 @@ module.exports = async (
                   'yahoo',
               }))
               .filter(
-                (item) =>
+                item =>
                   item.ticker
               )
               .slice(0, 10)
@@ -177,41 +179,30 @@ module.exports = async (
       );
     }
 
-    /*
-     * Yahoo가 결과를 못 주는 경우
-     * 자체 유니버스로 fallback.
-     */
     if (!results.length) {
       results =
-        fallbackSearch(
-          query
-        );
+        fallbackSearch(query);
     }
 
-    /*
-     * 중복 제거.
-     */
     const seen =
       new Set();
 
     results =
-      results.filter(
-        (item) => {
-          if (
-            seen.has(
-              item.ticker
-            )
-          ) {
-            return false;
-          }
-
-          seen.add(
+      results.filter(item => {
+        if (
+          seen.has(
             item.ticker
-          );
-
-          return true;
+          )
+        ) {
+          return false;
         }
-      );
+
+        seen.add(
+          item.ticker
+        );
+
+        return true;
+      });
 
     return res.status(200).json({
       query,
