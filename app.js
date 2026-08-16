@@ -1997,6 +1997,12 @@ function renderPriceChart(
             points="${points}"
             class="chart-line"
             fill="none"
+            stroke="var(--amber)"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            vector-effect="non-scaling-stroke"
+
           />
 
         </svg>
