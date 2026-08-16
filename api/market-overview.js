@@ -1,8 +1,11 @@
 // api/market-overview.js
+const { guard } = require('../lib/auth');
 const { getSimpleQuote } = require('../lib/dataSources');
 const { INDICES } = require('../lib/universe');
 
 module.exports = async (req, res) => {
+  if (guard(req, res)) return;
+
   try {
     const results = await Promise.allSettled(INDICES.map((i) => getSimpleQuote(i.ticker)));
     const indices = results.map((r, i) => {

@@ -5,6 +5,8 @@
 // Google News RSS를 여러 검색어로 조회하고
 // 중복 기사를 제거하여 시장 전체 뉴스로 제공한다.
 
+const { guard } = require('../lib/auth');
+
 const FEEDS = [
   {
     category: 'KOREA',
@@ -197,6 +199,8 @@ module.exports = async (
   req,
   res
 ) => {
+  if (guard(req, res)) return;
+
   try {
     const limitRaw =
       Number(

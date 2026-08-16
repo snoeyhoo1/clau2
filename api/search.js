@@ -103,6 +103,8 @@ module.exports = async (
   req,
   res
 ) => {
+  if (guard(req, res)) return;
+
   try {
     const query =
       String(
