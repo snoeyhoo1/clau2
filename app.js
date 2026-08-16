@@ -984,6 +984,12 @@ function renderUpProbability(up) {
                 )}%
               </span>
 
+              <small>
+                표본 ${escapeHtml(
+                  data.sampleSize
+                )}건
+              </small>
+
             </div>
           `;
         })
