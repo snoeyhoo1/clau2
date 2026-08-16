@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+
+  <meta
+    name="theme-color"
+    content="#14120f"
+  />
+
+  <title>SIGNAL DESK</title>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Big+Shoulders+Display:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  />
+</head>
+
+<body>
+
+  <!-- =========================================================
+       AUTH GATE
+       ========================================================= -->
+
+  <div
+    id="authGate"
+    class="auth-gate"
+    hidden
+  >
+
+    <form
+      id="authForm"
+      class="auth-card"
+    >
+
+      <div class="auth-mark" aria-hidden="true"></div>
+
+      <h1 class="auth-title">
+        SIGNAL DESK
+      </h1>
+
+      <p class="auth-subtitle">
+        비밀번호를 입력하세요
+      </p>
+
+      <input
+        id="authPassword"
+        class="auth-input"
+        type="password"
+        autocomplete="current-password"
+        placeholder="PASSWORD"
+      />
+
+      <button
+        id="authSubmit"
+        class="auth-submit"
+        type="submit"
+      >
+        UNLOCK
+      </button>
+
+      <div
+        id="authError"
+        class="auth-error"
+        hidden
+      ></div>
+
+    </form>
+
+  </div>
+
+
+  <!-- =========================================================
+       MARKET TAPE
+       ========================================================= -->
+
+  <div class="tape-wrap">
+
+    <div class="tape-label">
+      MARKET
+    </div>
+
+    <div class="tape">
+
+      <div
+        id="tape"
+        class="tape-inner"
+      >
+        <span class="tape-loading">
+          시장 데이터를 불러오는 중...
+        </span>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       TOP BAR
+       ========================================================= -->
+
+  <header class="topbar">
+
+    <div class="brand">
+
+      <div
+        class="brand-mark"
+        aria-hidden="true"
+      ></div>
+
+      <div class="brand-text">
+
+        <h1>
+          SIGNAL DESK
+        </h1>
+
+        <p>
+          AI MARKET SIGNAL &amp; ANALYSIS
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="topbar-actions">
+
+      <span
+        id="updated"
+        class="updated"
+      >
+        업데이트 대기
+      </span>
+
+      <button
+        id="refreshBtn"
+        class="btn-refresh"
+        type="button"
+      >
+        REFRESH
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <main>
+
+    <!-- =======================================================
+         STOCK SEARCH
+         ======================================================= -->
+
+    <section class="search-section">
+
+      <div class="search-bar">
+
+        <input
+          id="searchInput"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="종목명 또는 종목코드 검색"
+        />
+
+        <button
+          id="searchBtn"
+          class="btn-apply"
+          type="button"
+        >
+          SEARCH
+        </button>
+
+        <div class="search-hint">
+          종목명 또는 코드 입력 · 예:
+          <code>삼성전자</code>,
+          <code>005930</code>
+        </div>
+
+      </div>
+
+
+      <div
+        id="searchResult"
+        class="search-result"
+      ></div>
+
+    </section>
+
+
+    <!-- =======================================================
+         MARKET OVERVIEW
+         ======================================================= -->
+
+    <section
+      id="marketOverview"
+      class="market-overview"
+    >
+
+      <div class="mo-loading">
+        시장 데이터를 불러오는 중...
+      </div>
+
+    </section>
+
+
+    <!-- =======================================================
+         MARKET BREADTH
+         ======================================================= -->
+
+    <section
+      id="breadthBar"
+      class="breadth-bar"
+    >
+
+      <span>
+        MARKET BREADTH
+      </span>
+
+      <div class="breadth-track">
+
+        <div
+          id="breadthBuy"
+          class="breadth-buy"
+          style="width:0%"
+        ></div>
+
+        <div
+          id="breadthHold"
+          class="breadth-hold"
+          style="width:0%"
+        ></div>
+
+        <div
+          id="breadthSell"
+          class="breadth-sell"
+          style="width:0%"
+        ></div>
+
+      </div>
+
+      <span id="breadthText">
+        -
+      </span>
+
+    </section>
+
+
+    <!-- =======================================================
+         MARKET NEWS
+         ======================================================= -->
+
+    <section
+      id="marketNews"
+      class="market-news"
+    >
+
+      <div class="news-header">
+
+        <div>
+
+          <h2 class="section-title">
+            MARKET NEWS
+          </h2>
+
+          <p class="section-subtitle">
+            주요 시황 및 시장 관련 뉴스
+          </p>
+
+        </div>
+
+        <button
+          id="marketNewsRefresh"
+          class="btn-refresh"
+          type="button"
+        >
+          NEWS REFRESH
+        </button>
+
+      </div>
+
+
+      <div
+        id="newsList"
+        class="news-list"
+      >
+
+        <div class="news-loading">
+          주요 시황을 불러오는 중...
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =======================================================
+         BUY / SELL SCAN
+         ======================================================= -->
+
+    <section class="scan-section">
+
+      <div class="scan-column">
+
+        <h2 class="scan-heading buy-heading">
+          BUY CANDIDATES
+        </h2>
+
+        <div
+          id="buyBoard"
+          class="board"
+        >
+
+          <div class="card">
+
+            <div class="card-error">
+              데이터를 불러오는 중...
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="scan-column">
+
+        <h2 class="scan-heading sell-heading">
+          SELL / WATCH
+        </h2>
+
+        <div
+          id="sellBoard"
+          class="board"
+        >
+
+          <div class="card">
+
+            <div class="card-error">
+              데이터를 불러오는 중...
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =======================================================
+         REAL ACCOUNT
+         ======================================================= -->
+
+    <section
+      id="accountSection"
+      class="account-section"
+    >
+
+      <h2 class="section-title">
+
+        MY ACCOUNT
+
+        <span class="env-badge env-real">
+          REAL
+        </span>
+
+      </h2>
+
+
+      <div
+        id="accountNotice"
+        class="account-notice"
+      >
+        실전 계좌 정보를 불러오는 중...
+      </div>
+
+
+      <div
+        id="accountSummary"
+        class="account-summary"
+      >
+
+        <div>
+
+          <span class="account-label">
+            총 평가금액
+          </span>
+
+          <strong id="accountTotal">
+            -
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span class="account-label">
+            주문 가능 금액
+          </span>
+
+          <strong id="accountAvailable">
+            -
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span class="account-label">
+            평가손익
+          </span>
+
+          <strong id="accountProfit">
+            -
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span class="account-label">
+            수익률
+          </span>
+
+          <strong id="accountRate">
+            -
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <div class="account-subheading">
+        HOLDINGS
+      </div>
+
+
+      <div
+        id="holdingsList"
+        class="holdings-list"
+      >
+
+        <div class="account-notice">
+          보유 종목을 불러오는 중...
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =======================================================
+         BACKTEST
+         ======================================================= -->
+
+    <section class="backtest-panel">
+
+      <h2>
+        STRATEGY BACKTEST
+      </h2>
+
+      <p class="hint">
+        현재 전략을 과거 데이터에 적용해 성과를 확인합니다.
+      </p>
+
+
+      <div class="backtest-controls">
+
+        <input
+          id="backtestTicker"
+          type="text"
+          autocomplete="off"
+          placeholder="종목코드"
+        />
+
+
+        <select id="backtestPeriod">
+
+          <option value="1y">
+            1 YEAR
+          </option>
+
+          <option value="2y">
+            2 YEARS
+          </option>
+
+          <option value="3y">
+            3 YEARS
+          </option>
+
+          <option value="5y">
+            5 YEARS
+          </option>
+
+        </select>
+
+
+        <button
+          id="backtestBtn"
+          class="btn-apply"
+          type="button"
+        >
+          RUN BACKTEST
+        </button>
+
+      </div>
+
+
+      <div
+        id="backtestResult"
+        class="bt-result"
+      ></div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================================================
+       REAL ORDER MODAL
+       ========================================================= -->
+
+  <div
+    id="orderModal"
+    class="modal-overlay"
+    hidden
+  >
+
+    <div class="modal">
+
+      <h3 id="orderTitle">
+        REAL ORDER
+      </h3>
+
+
+      <div class="order-field">
+
+        <label for="orderTicker">
+          종목코드
+        </label>
+
+        <input
+          id="orderTicker"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+        />
+
+      </div>
+
+
+      <div class="order-field">
+
+        <label for="orderQuantity">
+          주문 수량
+        </label>
+
+        <input
+          id="orderQuantity"
+          type="number"
+          min="1"
+          step="1"
+          value="1"
+        />
+
+      </div>
+
+
+      <div class="order-field">
+
+        <label for="orderPrice">
+          주문 가격
+        </label>
+
+        <input
+          id="orderPrice"
+          type="number"
+          min="0"
+          step="1"
+          placeholder="시장가 주문 시 비워두세요"
+        />
+
+      </div>
+
+
+      <div class="order-warning">
+        실전 계좌에 실제 주문이 전송됩니다.
+        주문 전 종목·수량·가격을 반드시 확인하세요.
+      </div>
+
+
+      <div class="modal-actions">
+
+        <button
+          id="orderCancelBtn"
+          class="btn-trade"
+          type="button"
+        >
+          CANCEL
+        </button>
+
+        <button
+          id="orderConfirmBtn"
+          class="btn-trade btn-buy"
+          type="button"
+        >
+          CONFIRM ORDER
+        </button>
+
+      </div>
+
+
+      <div
+        id="orderMessage"
+        class="order-success"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <footer class="disclaimer">
+    SIGNAL DESK · REAL MARKET DATA · REAL ACCOUNT
+  </footer>
+
+
+  <script src="app.js"></script>
+
+</body>
+</html>
