@@ -22,6 +22,42 @@ function keyFor(
   );
 }
 
+function isValidEndpoint(
+  endpoint
+) {
+  if (
+    typeof endpoint !==
+    'string'
+  ) {
+    return false;
+  }
+
+  const value =
+    endpoint.trim();
+
+  if (
+    !value ||
+    value.length > 2048
+  ) {
+    return false;
+  }
+
+  try {
+    const url =
+      new URL(value);
+
+    return (
+      url.protocol ===
+        'https:' &&
+      Boolean(
+        url.hostname
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
 module.exports =
   async (
     req,
@@ -33,20 +69,37 @@ module.exports =
       return;
     }
 
+    res.setHeader(
+      'Cache-Control',
+      'no-store, max-age=0'
+    );
+
+    res.setHeader(
+      'X-Content-Type-Options',
+      'nosniff'
+    );
+
     const action =
       String(
-        req.query?.action || ''
-      ).toLowerCase();
+        req.query?.action ||
+          ''
+      )
+        .trim()
+        .toLowerCase();
 
     if (
-      action === 'subscribe'
+      action ===
+      'subscribe'
     ) {
       if (
-        req.method !== 'POST'
+        req.method !==
+        'POST'
       ) {
         return res.status(405).json({
+          ok: false,
+
           error:
-            'POST만 지원',
+            'POST만 지원합니다.',
         });
       }
 
@@ -55,22 +108,52 @@ module.exports =
           req.body;
 
         if (
-          !subscription?.endpoint
+          !subscription ||
+          typeof subscription !==
+            'object'
         ) {
           return res.status(400).json({
+            ok: false,
+
             error:
-              '유효하지 않은 구독 정보',
+              '유효하지 않은 구독 정보입니다.',
           });
         }
 
+        const endpoint =
+          String(
+            subscription.endpoint ||
+              ''
+          ).trim();
+
+        if (
+          !isValidEndpoint(
+            endpoint
+          )
+        ) {
+          return res.status(400).json({
+            ok: false,
+
+            error:
+              '유효하지 않은 Push endpoint입니다.',
+          });
+        }
+
+        const normalized =
+          {
+            ...subscription,
+
+            endpoint,
+          };
+
         const key =
           keyFor(
-            subscription.endpoint
+            endpoint
           );
 
         await kv.set(
           key,
-          subscription
+          normalized
         );
 
         await kv.sadd(
@@ -80,25 +163,43 @@ module.exports =
 
         return res.status(200).json({
           ok: true,
+
+          subscribed: true,
         });
+
       } catch (err) {
+        console.error(
+          '[api/push/subscribe]',
+          err
+        );
+
         return res.status(500).json({
+          ok: false,
+
           error:
             err?.message ||
             '구독 저장 실패',
+
+          type:
+            err?.name ||
+            'Error',
         });
       }
     }
 
     if (
-      action === 'unsubscribe'
+      action ===
+      'unsubscribe'
     ) {
       if (
-        req.method !== 'POST'
+        req.method !==
+        'POST'
       ) {
         return res.status(405).json({
+          ok: false,
+
           error:
-            'POST만 지원',
+            'POST만 지원합니다.',
         });
       }
 
@@ -108,16 +209,27 @@ module.exports =
         } =
           req.body || {};
 
-        if (!endpoint) {
+        const normalizedEndpoint =
+          String(
+            endpoint || ''
+          ).trim();
+
+        if (
+          !isValidEndpoint(
+            normalizedEndpoint
+          )
+        ) {
           return res.status(400).json({
+            ok: false,
+
             error:
-              'endpoint 필요',
+              '유효한 endpoint가 필요합니다.',
           });
         }
 
         const key =
           keyFor(
-            endpoint
+            normalizedEndpoint
           );
 
         await kv.del(
@@ -131,12 +243,26 @@ module.exports =
 
         return res.status(200).json({
           ok: true,
+
+          subscribed: false,
         });
+
       } catch (err) {
+        console.error(
+          '[api/push/unsubscribe]',
+          err
+        );
+
         return res.status(500).json({
+          ok: false,
+
           error:
             err?.message ||
             '구독 해제 실패',
+
+          type:
+            err?.name ||
+            'Error',
         });
       }
     }
@@ -146,23 +272,43 @@ module.exports =
       'vapid-public-key'
     ) {
       if (
-        !process.env
-          .VAPID_PUBLIC_KEY
+        req.method !==
+        'GET'
       ) {
+        return res.status(405).json({
+          ok: false,
+
+          error:
+            'GET만 지원합니다.',
+        });
+      }
+
+      const publicKey =
+        String(
+          process.env
+            .VAPID_PUBLIC_KEY ||
+            ''
+        ).trim();
+
+      if (!publicKey) {
         return res.status(503).json({
+          ok: false,
+
           error:
             'VAPID 키가 설정되지 않았습니다. 서버 환경변수를 확인하세요.',
         });
       }
 
       return res.status(200).json({
-        publicKey:
-          process.env
-            .VAPID_PUBLIC_KEY,
+        ok: true,
+
+        publicKey,
       });
     }
 
     return res.status(404).json({
+      ok: false,
+
       error:
         '지원하지 않는 Push 경로입니다.',
     });
