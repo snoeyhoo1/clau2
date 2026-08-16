@@ -1,3 +1,5 @@
+const { guard } = require('../../lib/auth');
+
 const {
   runQuantBacktest,
 } = require('../../lib/backtest');
@@ -122,6 +124,8 @@ module.exports =
     req,
     res
   ) => {
+    if (guard(req, res)) return;
+
     try {
       const ticker =
         normalizeTicker(
