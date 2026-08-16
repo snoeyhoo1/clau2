@@ -17,6 +17,11 @@ const {
   sendToSubscription,
 } = require('../lib/push');
 
+const {
+  recordSignal,
+  evaluatePendingSignals,
+} = require('../lib/signalLog');
+
 const STRONG_BUY_THRESHOLD =
   60;
 
@@ -134,6 +139,48 @@ module.exports = async (
       STATE_KEY,
       newState
     );
+
+    /*
+     * 신호 검증 로그:
+     * - 새로 뜬 강한 매수 신호는 스냅샷으로 기록
+     * - 이전에 기록해둔 신호들 중 평가 시점이 된 것들은
+     *   실제 가격으로 결과를 채운다.
+     * 새 신호가 없어도(early return 이전에) 매 실행마다 돈다.
+     */
+    try {
+      for (
+        const item of newStrongSignals
+      ) {
+        await recordSignal({
+          ticker: item.ticker,
+          label: item.label,
+          market:
+            item.market ||
+            null,
+          side: 'buy',
+          score:
+            Number(
+              item.combinedScore
+            ) || 0,
+          aiScore:
+            Number(
+              item.aiScore
+            ) || 0,
+          entryPrice:
+            Number(
+              item.currentPrice
+            ) || 0,
+        });
+      }
+
+      await evaluatePendingSignals();
+
+    } catch (err) {
+      console.error(
+        '[cron/signalLog]',
+        err
+      );
+    }
 
     if (
       newStrongSignals.length ===
