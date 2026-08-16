@@ -2879,48 +2879,37 @@ function renderAccount(data) {
 
 
 async function loadAccount() {
-  const endpoints = [
-    '/api/account',
-    '/api/account/summary'
-  ];
-
-  for (
-    const endpoint of endpoints
-  ) {
-    try {
-      const response =
-        await fetch(
-          endpoint,
-          {
-            cache:
-              'no-store'
-          }
-        );
-
-      if (!response.ok) {
-        continue;
-      }
-
-      const data =
-        await response.json();
-
-      renderAccount(
-        data
+  try {
+    const response =
+      await fetch(
+        '/api/account',
+        {
+          cache:
+            'no-store'
+        }
       );
 
-      return;
+    const data =
+      await safeJson(
+        response
+      );
 
-    } catch {
-      continue;
+    renderAccount(
+      data
+    );
+
+  } catch (error) {
+    console.error(
+      '[account]',
+      error
+    );
+
+    if (accountNotice) {
+      accountNotice.textContent =
+        '계좌 정보를 불러올 수 없습니다.';
     }
   }
-
-  if (accountNotice) {
-    accountNotice.textContent =
-      '계좌 정보를 불러올 수 없습니다.';
-  }
 }
-
 
 /* ============================================================
  * EVENTS
