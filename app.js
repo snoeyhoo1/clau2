@@ -104,6 +104,36 @@ const accountNotice =
 const holdingsList =
   document.getElementById('holdingsList');
 
+const orderModal =
+  document.getElementById('orderModal');
+
+const orderTitle =
+  document.getElementById('orderTitle');
+
+const orderInfo =
+  document.getElementById('orderInfo');
+
+const orderTicker =
+  document.getElementById('orderTicker');
+
+const orderQuantity =
+  document.getElementById('orderQuantity');
+
+const orderQuantityHint =
+  document.getElementById('orderQuantityHint');
+
+const orderPrice =
+  document.getElementById('orderPrice');
+
+const orderCancelBtn =
+  document.getElementById('orderCancelBtn');
+
+const orderConfirmBtn =
+  document.getElementById('orderConfirmBtn');
+
+const orderMessage =
+  document.getElementById('orderMessage');
+
 
 let loading = false;
 let appStarted = false;
@@ -1004,7 +1034,7 @@ function renderUpProbability(up) {
  * SCAN CARD
  * ============================================================ */
 
-function renderCard(item) {
+function renderCard(item, side = 'buy') {
   if (item?.error) {
     return `
       <div class="card">
@@ -1157,6 +1187,49 @@ function renderCard(item) {
       ${renderHeadlines(
         item?.news?.headlines
       )}
+
+      <div class="card-actions">
+        <button
+          type="button"
+          class="card-trade-btn ${
+            side === 'sell'
+              ? 'card-trade-sell'
+              : ''
+          }"
+          data-ticker="${escapeHtml(
+            item?.ticker
+          )}"
+          data-label="${escapeHtml(
+            item?.label
+          )}"
+          data-side="${escapeHtml(side)}"
+          data-entry="${escapeHtml(
+            item?.aiStrategy?.execution
+              ?.entry ??
+              item?.currentPrice ??
+              ''
+          )}"
+          data-stop="${escapeHtml(
+            item?.aiStrategy?.execution
+              ?.stop ?? ''
+          )}"
+          data-target1="${escapeHtml(
+            item?.aiStrategy?.execution
+              ?.target1 ?? ''
+          )}"
+          data-riskreward="${escapeHtml(
+            item?.aiStrategy?.execution
+              ?.riskReward ?? ''
+          )}"
+          data-currency="${escapeHtml(
+            item?.currency ?? ''
+          )}"
+        >
+          ${side === 'sell'
+            ? '매도 / 청산 검토'
+            : '매수 검토'}
+        </button>
+      </div>
 
     </article>
   `;
@@ -1495,7 +1568,9 @@ async function loadScan() {
       buyBoard.innerHTML =
         buyCandidates.length
           ? buyCandidates
-              .map(renderCard)
+              .map(item =>
+                renderCard(item, 'buy')
+              )
               .join('')
           : `
             <div
@@ -1513,7 +1588,9 @@ async function loadScan() {
       sellBoard.innerHTML =
         sellCandidates.length
           ? sellCandidates
-              .map(renderCard)
+              .map(item =>
+                renderCard(item, 'sell')
+              )
               .join('')
           : `
             <div
@@ -3349,6 +3426,419 @@ function startApp() {
     );
   });
 }
+
+
+/* ============================================================
+ * REAL ORDER (신호 → 실전 매매 2단계 확인)
+ *
+ * 1단계: 후보 카드의 "매수/매도 검토" 버튼 → 확인 모달 오픈
+ * 2단계: 모달에서 수량/가격 검토 후 CONFIRM ORDER 클릭
+ *        → confirm:true로 /api/kis?action=order 호출
+ *
+ * 자동매매 아님: 사용자가 모달에서 직접 확인 버튼을 눌러야만
+ * 실제 주문이 KIS 실전 계좌로 전송된다.
+ * ============================================================ */
+
+/*
+ * 추천 수량은 서버의 lib/positionSizing.js(공용 모듈)를
+ * /api/kis?action=sizing 경유로 그대로 가져온다.
+ * (프론트에서 계산식을 따로 복제하지 않음 - 계산 로직이
+ *  두 곳에서 어긋날 위험을 없애기 위함)
+ */
+async function fetchSuggestedSizing({
+  market,
+  entry,
+  stop,
+}) {
+  try {
+    const params = new URLSearchParams({
+      market,
+      entry: String(entry || ''),
+      stop: String(stop || ''),
+    });
+
+    const response = await fetch(
+      `/api/kis?action=sizing&${params.toString()}`,
+      { cache: 'no-store' }
+    );
+
+    const data = await safeJson(response);
+
+    if (!data?.ok) {
+      return { quantity: 0, estimatedCost: 0 };
+    }
+
+    return data;
+
+  } catch (error) {
+    console.error(
+      '[order/sizing]',
+      error
+    );
+
+    return { quantity: 0, estimatedCost: 0 };
+  }
+}
+
+function detectMarket(ticker) {
+  return /\.(KS|KQ)$/i.test(
+    String(ticker || '')
+  )
+    ? 'domestic'
+    : 'overseas';
+}
+
+function toKisCode(ticker, market) {
+  const raw = String(ticker || '');
+
+  return market === 'domestic'
+    ? raw.split('.')[0]
+    : raw;
+}
+
+let currentOrderContext = null;
+let orderSubmitting = false;
+
+function closeOrderModal() {
+  if (!orderModal) return;
+
+  orderModal.hidden = true;
+  currentOrderContext = null;
+  orderSubmitting = false;
+
+  if (orderMessage) {
+    orderMessage.textContent = '';
+  }
+
+  if (orderConfirmBtn) {
+    orderConfirmBtn.disabled = false;
+    orderConfirmBtn.textContent =
+      'CONFIRM ORDER';
+  }
+}
+
+
+async function openOrderModal(button) {
+  if (!orderModal || !button) return;
+
+  const ticker =
+    button.dataset.ticker || '';
+
+  const label =
+    button.dataset.label || ticker;
+
+  const side =
+    button.dataset.side === 'sell'
+      ? 'sell'
+      : 'buy';
+
+  const entry = num(
+    button.dataset.entry
+  );
+
+  const stop = num(
+    button.dataset.stop
+  );
+
+  const target1 = num(
+    button.dataset.target1
+  );
+
+  const riskReward =
+    button.dataset.riskreward || '-';
+
+  const currency =
+    button.dataset.currency ||
+    (detectMarket(ticker) === 'domestic'
+      ? 'KRW'
+      : 'USD');
+
+  const market = detectMarket(ticker);
+  const code = toKisCode(ticker, market);
+
+  currentOrderContext = {
+    ticker,
+    code,
+    label,
+    side,
+    market,
+    entry,
+    stop,
+    currency,
+  };
+
+  if (orderTitle) {
+    orderTitle.textContent =
+      `${side === 'sell' ? '매도' : '매수'} 주문 - ${label}`;
+  }
+
+  if (orderTicker) {
+    orderTicker.value =
+      `${code} (${ticker})`;
+  }
+
+  if (orderPrice) {
+    orderPrice.value =
+      entry > 0
+        ? String(
+            market === 'overseas'
+              ? entry
+              : Math.round(entry)
+          )
+        : '';
+
+    orderPrice.placeholder =
+      market === 'overseas'
+        ? '해외주식은 지정가만 가능 (가격 필수)'
+        : '시장가 주문 시 비워두세요';
+  }
+
+  if (orderQuantity) {
+    orderQuantity.value = '1';
+  }
+
+  if (orderInfo) {
+    orderInfo.innerHTML = `
+      <div class="order-info-row">
+        <span>진입가</span>
+        <b>${fmtPrice(entry, currency)}</b>
+      </div>
+      <div class="order-info-row order-info-warn">
+        <span>손절가</span>
+        <b>${
+          stop > 0
+            ? fmtPrice(stop, currency)
+            : '-'
+        }</b>
+      </div>
+      <div class="order-info-row">
+        <span>목표가</span>
+        <b>${
+          target1 > 0
+            ? fmtPrice(target1, currency)
+            : '-'
+        }</b>
+      </div>
+      <div class="order-info-row">
+        <span>R/R</span>
+        <b>${escapeHtml(riskReward)}</b>
+      </div>
+      <div class="order-info-row">
+        <span>추천 수량</span>
+        <b id="orderSuggestedQty">계산 중...</b>
+      </div>
+    `;
+  }
+
+  if (orderMessage) {
+    orderMessage.textContent = '';
+  }
+
+  orderModal.hidden = false;
+
+  /*
+   * 계좌 잔고는 모달을 여는 시점에 서버(lib/positionSizing.js)에서
+   * 새로 조회해서, 오래된 잔고 기준으로 수량이 추천되지 않도록 한다.
+   */
+  const sizing = await fetchSuggestedSizing({
+    market,
+    entry,
+    stop,
+  });
+
+  const suggestedEl =
+    document.getElementById(
+      'orderSuggestedQty'
+    );
+
+  if (suggestedEl) {
+    suggestedEl.textContent =
+      sizing.quantity > 0
+        ? `${sizing.quantity}주 (예상 ${fmtPrice(
+            sizing.estimatedCost,
+            currency
+          )})`
+        : '계산 불가 (잔고/가격 확인 필요)';
+  }
+
+  if (
+    orderQuantity &&
+    sizing.quantity > 0
+  ) {
+    orderQuantity.value = String(
+      sizing.quantity
+    );
+  }
+
+  if (orderQuantityHint) {
+    orderQuantityHint.textContent =
+      sizing.quantity > 0
+        ? `(추천 ${sizing.quantity}주 - 직접 수정 가능)`
+        : '(직접 입력)';
+  }
+}
+
+async function submitOrder() {
+  if (
+    !currentOrderContext ||
+    orderSubmitting
+  ) {
+    return;
+  }
+
+  const quantity = Math.floor(
+    num(orderQuantity?.value)
+  );
+
+  if (
+    !Number.isFinite(quantity) ||
+    quantity <= 0
+  ) {
+    if (orderMessage) {
+      orderMessage.textContent =
+        '유효한 수량을 입력하세요.';
+    }
+    return;
+  }
+
+  const priceRaw = String(
+    orderPrice?.value || ''
+  ).trim();
+
+  const price = priceRaw
+    ? num(priceRaw)
+    : null;
+
+  const {
+    market,
+    code,
+    side,
+  } = currentOrderContext;
+
+  if (
+    market === 'overseas' &&
+    (!price || price <= 0)
+  ) {
+    if (orderMessage) {
+      orderMessage.textContent =
+        '해외주식은 가격 입력이 필수입니다.';
+    }
+    return;
+  }
+
+  orderSubmitting = true;
+
+  if (orderConfirmBtn) {
+    orderConfirmBtn.disabled = true;
+    orderConfirmBtn.textContent =
+      '주문 전송 중...';
+  }
+
+  if (orderMessage) {
+    orderMessage.textContent = '';
+  }
+
+  try {
+    const response = await fetch(
+      '/api/kis?action=order',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'application/json',
+        },
+        body: JSON.stringify({
+          market,
+          code,
+          quantity,
+          price: price || undefined,
+          side,
+          orderType: price
+            ? 'limit'
+            : 'market',
+          confirm: true,
+        }),
+      }
+    );
+
+    const data = await safeJson(response);
+
+    if (!response.ok || !data?.ok) {
+      throw new Error(
+        data?.error ||
+        '주문이 거부되었습니다.'
+      );
+    }
+
+    if (orderMessage) {
+      orderMessage.textContent =
+        '주문이 정상적으로 전송되었습니다.';
+    }
+
+    setTimeout(() => {
+      closeOrderModal();
+      loadAccount();
+    }, 1200);
+
+  } catch (error) {
+    console.error(
+      '[order/submit]',
+      error
+    );
+
+    if (orderMessage) {
+      orderMessage.textContent =
+        error.message ||
+        '주문 처리 중 오류가 발생했습니다.';
+    }
+
+    orderSubmitting = false;
+
+    if (orderConfirmBtn) {
+      orderConfirmBtn.disabled = false;
+      orderConfirmBtn.textContent =
+        'CONFIRM ORDER';
+    }
+  }
+}
+
+/*
+ * 카드는 동적으로 다시 그려지므로,
+ * buyBoard/sellBoard 컨테이너에 이벤트 위임으로 처리한다.
+ */
+[buyBoard, sellBoard].forEach(board => {
+  board?.addEventListener(
+    'click',
+    event => {
+      const button = event.target?.closest(
+        '.card-trade-btn'
+      );
+
+      if (!button) return;
+
+      openOrderModal(button);
+    }
+  );
+});
+
+orderCancelBtn?.addEventListener(
+  'click',
+  closeOrderModal
+);
+
+orderConfirmBtn?.addEventListener(
+  'click',
+  submitOrder
+);
+
+orderModal?.addEventListener(
+  'click',
+  event => {
+    if (event.target === orderModal) {
+      closeOrderModal();
+    }
+  }
+);
 
 
 /* ============================================================
