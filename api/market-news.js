@@ -1,17 +1,4 @@
 // api/market-news.js
-//
-// 주요 시장 뉴스 Aggregator
-//
-// Google News RSS를 여러 검색어로 조회하고
-// 중복 기사를 제거하여 시장 전체 뉴스로 제공한다.
-//
-// 개선:
-// - 개별 RSS 요청 timeout
-// - 일부 RSS 실패 시 나머지 결과 유지
-// - 실패한 카테고리 정보 제공
-// - API 응답 캐시 방지
-// - 기존 articles 구조 유지
-// - 디자인/프론트 호환 유지
 
 const {
   guard,
@@ -52,6 +39,12 @@ const FEEDS = [
 
 const FEED_TIMEOUT_MS =
   10000;
+
+const DEFAULT_NEWS_LIMIT =
+  8;
+
+const MAX_NEWS_LIMIT =
+  8;
 
 function decodeXml(
   value
@@ -295,25 +288,25 @@ module.exports = async (
   }
 
   try {
-    const limitRaw =
+    const requestedLimit =
       Number(
         req.query?.limit
       );
 
     const limit =
       Number.isFinite(
-        limitRaw
+        requestedLimit
       )
         ? Math.max(
-            5,
+            1,
             Math.min(
-              30,
+              MAX_NEWS_LIMIT,
               Math.floor(
-                limitRaw
+                requestedLimit
               )
             )
           )
-        : 20;
+        : DEFAULT_NEWS_LIMIT;
 
     const results =
       await Promise.allSettled(
@@ -344,18 +337,16 @@ module.exports = async (
             ...result.value
           );
         } else {
-          failedCategories.push(
-            {
-              category:
-                FEEDS[index]
-                  .category,
+          failedCategories.push({
+            category:
+              FEEDS[index]
+                .category,
 
-              error:
-                result.reason
-                  ?.message ||
-                '뉴스 요청 실패',
-            }
-          );
+            error:
+              result.reason
+                ?.message ||
+              '뉴스 요청 실패',
+          });
 
           console.warn(
             '[api/market-news]',
