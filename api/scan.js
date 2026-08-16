@@ -1,6 +1,10 @@
 // api/scan.js
 
 const {
+  guard,
+} = require('../lib/auth');
+
+const {
   scanUniverse,
 } = require('../lib/signalEngine');
 
