@@ -4,8 +4,18 @@
 //
 // Google News RSS를 여러 검색어로 조회하고
 // 중복 기사를 제거하여 시장 전체 뉴스로 제공한다.
+//
+// 개선:
+// - 개별 RSS 요청 timeout
+// - 일부 RSS 실패 시 나머지 결과 유지
+// - 실패한 카테고리 정보 제공
+// - API 응답 캐시 방지
+// - 기존 articles 구조 유지
+// - 디자인/프론트 호환 유지
 
-const { guard } = require('../lib/auth');
+const {
+  guard,
+} = require('../lib/auth');
 
 const FEEDS = [
   {
@@ -21,7 +31,8 @@ const FEEDS = [
   },
 
   {
-    category: 'SEMICONDUCTOR',
+    category:
+      'SEMICONDUCTOR',
     query:
       '반도체 삼성전자 SK하이닉스 엔비디아',
   },
@@ -39,8 +50,15 @@ const FEEDS = [
   },
 ];
 
-function decodeXml(value) {
-  return String(value || '')
+const FEED_TIMEOUT_MS =
+  10000;
+
+function decodeXml(
+  value
+) {
+  return String(
+    value || ''
+  )
     .replace(
       /<!\[CDATA\[([\s\S]*?)\]\]>/g,
       '$1'
@@ -67,7 +85,9 @@ function decodeXml(value) {
     );
 }
 
-function stripHtml(value) {
+function stripHtml(
+  value
+) {
   return decodeXml(value)
     .replace(
       /<[^>]*>/g,
@@ -89,7 +109,9 @@ function getTag(
     );
 
   return match
-    ? stripHtml(match[1])
+    ? stripHtml(
+        match[1]
+      )
     : '';
 }
 
@@ -114,92 +136,163 @@ async function fetchFeed(
 ) {
   const url =
     'https://news.google.com/rss/search?q=' +
-    encodeURIComponent(query) +
+    encodeURIComponent(
+      query
+    ) +
     '&hl=ko&gl=KR&ceid=KR:ko';
 
-  const response =
-    await fetch(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (signal-desk)',
-        Accept:
-          'application/rss+xml,text/xml',
-      },
-    });
+  const controller =
+    new AbortController();
 
-  if (!response.ok) {
-    throw new Error(
-      `뉴스 요청 실패 (${response.status})`
+  const timer =
+    setTimeout(
+      () => {
+        controller.abort();
+      },
+      FEED_TIMEOUT_MS
+    );
+
+  try {
+    const response =
+      await fetch(
+        url,
+        {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (signal-desk)',
+
+            Accept:
+              'application/rss+xml,text/xml',
+          },
+
+          signal:
+            controller.signal,
+        }
+      );
+
+    if (
+      !response.ok
+    ) {
+      throw new Error(
+        `뉴스 요청 실패 (${response.status})`
+      );
+    }
+
+    const xml =
+      await response.text();
+
+    const blocks =
+      [
+        ...xml.matchAll(
+          /<item>([\s\S]*?)<\/item>/gi
+        ),
+      ];
+
+    return blocks
+      .map(
+        match => {
+          const block =
+            match[1];
+
+          const title =
+            getTag(
+              block,
+              'title'
+            );
+
+          const description =
+            getTag(
+              block,
+              'description'
+            );
+
+          const pubDate =
+            getTag(
+              block,
+              'pubDate'
+            );
+
+          const link =
+            getLink(
+              block
+            );
+
+          const source =
+            getTag(
+              block,
+              'source'
+            );
+
+          if (!title) {
+            return null;
+          }
+
+          return {
+            title,
+            description,
+            pubDate,
+            link,
+            source,
+            category,
+          };
+        }
+      )
+      .filter(Boolean);
+
+  } catch (error) {
+    if (
+      error?.name ===
+      'AbortError'
+    ) {
+      throw new Error(
+        `${category} 뉴스 요청 시간 초과`
+      );
+    }
+
+    throw error;
+
+  } finally {
+    clearTimeout(
+      timer
     );
   }
-
-  const xml =
-    await response.text();
-
-  const blocks =
-    [
-      ...xml.matchAll(
-        /<item>([\s\S]*?)<\/item>/gi
-      ),
-    ];
-
-  return blocks
-    .map(
-      (match) => {
-        const block =
-          match[1];
-
-        const title =
-          getTag(
-            block,
-            'title'
-          );
-
-        const description =
-          getTag(
-            block,
-            'description'
-          );
-
-        const pubDate =
-          getTag(
-            block,
-            'pubDate'
-          );
-
-        const link =
-          getLink(
-            block
-          );
-
-        const source =
-          getTag(
-            block,
-            'source'
-          );
-
-        if (!title) {
-          return null;
-        }
-
-        return {
-          title,
-          description,
-          pubDate,
-          link,
-          source,
-          category,
-        };
-      }
-    )
-    .filter(Boolean);
 }
 
 module.exports = async (
   req,
   res
 ) => {
-  if (guard(req, res)) return;
+  if (
+    guard(
+      req,
+      res
+    )
+  ) {
+    return;
+  }
+
+  res.setHeader(
+    'Cache-Control',
+    'no-store, max-age=0'
+  );
+
+  res.setHeader(
+    'X-Content-Type-Options',
+    'nosniff'
+  );
+
+  if (
+    req.method !== 'GET'
+  ) {
+    return res.status(405).json({
+      ok: false,
+
+      error:
+        'GET만 지원합니다.',
+
+      articles: [],
+    });
+  }
 
   try {
     const limitRaw =
@@ -225,7 +318,7 @@ module.exports = async (
     const results =
       await Promise.allSettled(
         FEEDS.map(
-          (feed) =>
+          feed =>
             fetchFeed(
               feed.category,
               feed.query
@@ -235,8 +328,14 @@ module.exports = async (
 
     const articles = [];
 
+    const failedCategories =
+      [];
+
     results.forEach(
-      (result) => {
+      (
+        result,
+        index
+      ) => {
         if (
           result.status ===
           'fulfilled'
@@ -244,19 +343,36 @@ module.exports = async (
           articles.push(
             ...result.value
           );
+        } else {
+          failedCategories.push(
+            {
+              category:
+                FEEDS[index]
+                  .category,
+
+              error:
+                result.reason
+                  ?.message ||
+                '뉴스 요청 실패',
+            }
+          );
+
+          console.warn(
+            '[api/market-news]',
+            FEEDS[index]
+              .category,
+            result.reason
+          );
         }
       }
     );
 
-    /*
-     * 같은 제목 중복 제거.
-     */
     const seen =
       new Set();
 
     const unique =
       articles.filter(
-        (article) => {
+        article => {
           const key =
             article.title
               .toLowerCase()
@@ -278,9 +394,6 @@ module.exports = async (
         }
       );
 
-    /*
-     * 최신 뉴스 우선.
-     */
     unique.sort(
       (a, b) => {
         const ta =
@@ -297,7 +410,15 @@ module.exports = async (
       }
     );
 
+    const successfulFeeds =
+      FEEDS.length -
+      failedCategories.length;
+
     return res.status(200).json({
+      ok:
+        unique.length > 0 ||
+        successfulFeeds > 0,
+
       articles:
         unique.slice(
           0,
@@ -312,10 +433,23 @@ module.exports = async (
 
       categories:
         FEEDS.map(
-          (feed) =>
+          feed =>
             feed.category
         ),
+
+      status: {
+        totalFeeds:
+          FEEDS.length,
+
+        successfulFeeds,
+
+        failedFeeds:
+          failedCategories.length,
+
+        failedCategories,
+      },
     });
+
   } catch (error) {
     console.error(
       '[api/market-news]',
@@ -323,11 +457,24 @@ module.exports = async (
     );
 
     return res.status(500).json({
+      ok: false,
+
       error:
         error?.message ||
         '시장 뉴스 조회 실패',
 
       articles: [],
+
+      status: {
+        totalFeeds:
+          FEEDS.length,
+
+        successfulFeeds:
+          0,
+
+        failedFeeds:
+          FEEDS.length,
+      },
     });
   }
 };
