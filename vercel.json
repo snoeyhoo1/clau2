@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/api/auth/:action",
+      "destination": "/api/auth?action=:action"
+    },
+    {
+      "source": "/api/push/:action",
+      "destination": "/api/push?action=:action"
+    },
+    {
+      "source": "/api/kis/:action",
+      "destination": "/api/kis?action=:action"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/$1"
     }
