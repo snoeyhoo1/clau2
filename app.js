@@ -104,6 +104,12 @@ const accountNotice =
 const holdingsList =
   document.getElementById('holdingsList');
 
+const signalTrackNotice =
+  document.getElementById('signalTrackNotice');
+
+const signalTrackSummary =
+  document.getElementById('signalTrackSummary');
+
 const orderModal =
   document.getElementById('orderModal');
 
@@ -3176,6 +3182,119 @@ async function loadAccount() {
 
 
 /* ============================================================
+ * AI SIGNAL TRACK RECORD
+ *
+ * 지금까지 강한 매수 신호가 실제로 5/10/20거래일 후
+ * 얼마나 잘 맞았는지 보여준다. (cron/check-signals.js가
+ * lib/signalLog.js를 통해 계속 쌓아온 기록)
+ * ============================================================ */
+
+const HORIZON_LABELS = {
+  5: '5거래일',
+  10: '10거래일',
+  20: '20거래일',
+};
+
+function renderSignalTrack(data) {
+  if (!signalTrackSummary) return;
+
+  if (!data?.ok) {
+    if (signalTrackNotice) {
+      signalTrackNotice.textContent =
+        '검증 데이터를 불러올 수 없습니다.';
+    }
+    return;
+  }
+
+  const totalEvaluated = num(
+    data.totalEvaluated
+  );
+
+  if (signalTrackNotice) {
+    signalTrackNotice.textContent =
+      totalEvaluated > 0
+        ? `검증 완료된 신호 ${totalEvaluated}건 기준`
+        : '아직 검증 완료된 신호가 없습니다. ' +
+          '신호가 뜬 뒤 최소 5거래일이 지나야 데이터가 쌓여요.';
+  }
+
+  const byHorizon =
+    data.byHorizon || {};
+
+  signalTrackSummary.innerHTML = Object.entries(
+    byHorizon
+  )
+    .map(([horizon, stat]) => {
+      const label =
+        HORIZON_LABELS[horizon] ||
+        `${horizon}거래일`;
+
+      const hasData =
+        stat?.sampleSize > 0 &&
+        stat?.winRate !== null;
+
+      const winRateClass =
+        hasData && stat.winRate >= 50
+          ? 'change-up'
+          : 'change-down';
+
+      return `
+        <div>
+          <span class="account-label">
+            ${escapeHtml(label)} 적중률
+          </span>
+
+          <strong class="${
+            hasData ? winRateClass : ''
+          }">
+            ${
+              hasData
+                ? `${stat.winRate}%`
+                : '데이터 부족'
+            }
+          </strong>
+
+          ${
+            hasData
+              ? `<small>표본 ${escapeHtml(
+                  stat.sampleSize
+                )}건 · 평균 ${escapeHtml(
+                  stat.avgReturnPct
+                )}%</small>`
+              : ''
+          }
+        </div>
+      `;
+    })
+    .join('');
+}
+
+async function loadSignalTrack() {
+  try {
+    const response = await fetch(
+      '/api/signal-track',
+      { cache: 'no-store' }
+    );
+
+    const data = await safeJson(response);
+
+    renderSignalTrack(data);
+
+  } catch (error) {
+    console.error(
+      '[signal-track]',
+      error
+    );
+
+    if (signalTrackNotice) {
+      signalTrackNotice.textContent =
+        '검증 데이터를 불러올 수 없습니다.';
+    }
+  }
+}
+
+
+/* ============================================================
  * EVENTS
  * ============================================================ */
 
@@ -3418,7 +3537,8 @@ function startApp() {
     loadMarketOverview(),
     loadScan(),
     loadMarketNews(),
-    loadAccount()
+    loadAccount(),
+    loadSignalTrack()
   ]).catch(error => {
     console.error(
       '[app start]',
