@@ -3,14 +3,15 @@
 // SIGNAL DESK SERVICE WORKER
 //
 // 변경:
-// - 캐시 버전을 올려 기존 v1 캐시를 폐기
+// - 캐시 버전을 v3으로 변경
+// - 실제 /icon 경로 사용
 // - index.html / app.js / style.css는 최신 네트워크 파일 우선
 // - 네트워크 실패 시에만 캐시 fallback
 // - API는 항상 network-first
 // - 업데이트된 Service Worker가 즉시 활성화되도록 유지
 
 const CACHE_NAME =
-  'signal-desk-v2';
+  'signal-desk-v3';
 
 const APP_SHELL = [
   '/',
@@ -18,8 +19,8 @@ const APP_SHELL = [
   '/style.css',
   '/app.js',
   '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/icon/icon-192.png',
+  '/icon/icon-512.png',
 ];
 
 
@@ -105,6 +106,7 @@ self.addEventListener(
         request.url
       );
 
+
     /*
      * ========================================================
      * API
@@ -152,13 +154,7 @@ self.addEventListener(
      *
      * HTML / JS / CSS는 최신 버전을 먼저 가져온다.
      *
-     * 기존:
-     *
-     *   cache -> network
-     *
-     * 변경:
-     *
-     *   network -> cache
+     * network -> cache
      *
      * 이렇게 해야 GitHub/Vercel에 새 app.js나
      * style.css를 올렸을 때 이전 화면이 계속 남는 문제가
@@ -316,10 +312,10 @@ self.addEventListener(
             data.body,
 
           icon:
-            '/icons/icon-192.png',
+            '/icon/icon-192.png',
 
           badge:
-            '/icons/icon-192.png',
+            '/icon/icon-192.png',
 
           data: {
             url:
