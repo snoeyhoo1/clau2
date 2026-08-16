@@ -503,7 +503,7 @@ async function loadMarketNews() {
       );
 
     const data =
-      await safeJson(response);
+      await response.json();
 
     renderMarketNews(
       data?.articles
