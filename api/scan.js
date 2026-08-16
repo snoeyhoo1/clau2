@@ -20,12 +20,21 @@ module.exports = async (
 ) => {
   if (guard(req, res)) return;
 
+  if (
+    req.method !== 'GET'
+  ) {
+    return res.status(405).json({
+      error:
+        'GET만 지원합니다.',
+    });
+  }
+
   try {
     const market =
       String(
         req.query?.market ||
         ''
-      ).toLowerCase();
+      ).trim().toLowerCase();
 
     let universe =
       FULL_UNIVERSE;
@@ -35,9 +44,7 @@ module.exports = async (
     ) {
       universe =
         US_UNIVERSE;
-    }
-
-    if (
+    } else if (
       market === 'kr'
     ) {
       universe =
@@ -49,7 +56,7 @@ module.exports = async (
         universe
       );
 
-    res.status(200).json({
+    return res.status(200).json({
       ...result,
 
       generatedAt:
@@ -59,16 +66,21 @@ module.exports = async (
         market ||
         'all',
     });
+
   } catch (err) {
     console.error(
       '[api/scan]',
       err
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       error:
         err?.message ||
         '스캔 실패',
+
+      type:
+        err?.name ||
+        'Error',
     });
   }
 };
