@@ -2,19 +2,15 @@
 //
 // SIGNAL DESK
 //
-// 기존 SIGNAL DESK UI 유지
-// 검색 → AI 분석 → 차트 → 백테스트
-// 시장 현황 → 뉴스 → 스캔 → breadth
-//
-// 안정화:
-// - 검색 / AI / 차트를 서로 독립적으로 처리
+// 안정화 버전
+// - 검색 / AI / 차트 독립 처리
+// - 한국주식 Yahoo ticker 자동 보정
+// - 차트 데이터 검증 및 재시도
 // - AI 실패 시에도 차트 표시
-// - 차트 실패 시에도 AI 결과 표시
-// - 검색 결과에서 백테스트 연결 유지
-// - 뉴스 / 시장현황 / 스캔 개별 실패 허용
-// - 중복 이벤트 등록 방지
-// - 외부 뉴스 링크 안전성 강화
-// - 숫자/배열/null 응답 방어
+// - 차트 실패 시에도 AI 표시
+// - 뉴스 최대 6개
+// - 글로벌 하단 BACKTEST 숨김
+// - 기존 SIGNAL DESK UI 유지
 //
 
 /* ============================================================
@@ -26,10 +22,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('/sw.js')
       .catch(err => {
-        console.warn(
-          '서비스워커 등록 실패:',
-          err
-        );
+        console.warn('서비스워커 등록 실패:', err);
       });
   });
 }
@@ -117,29 +110,83 @@ let appStarted = false;
 
 
 /* ============================================================
+ * GLOBAL BACKTEST 숨김
+ *
+ * 검색 결과 내부 BACKTEST는 유지하고
+ * 페이지 하단의 별도 BACKTEST UI만 숨긴다.
+ * ============================================================ */
+
+function hideGlobalBacktest() {
+  if (!backtestTicker) {
+    return;
+  }
+
+  const candidates = [
+    backtestTicker,
+    backtestPeriod,
+    backtestBtn,
+    backtestResult
+  ].filter(Boolean);
+
+  if (!candidates.length) {
+    return;
+  }
+
+  let container = null;
+
+  for (const element of candidates) {
+    const section =
+      element.closest(
+        'section, .panel, .card, .backtest-panel, .backtest-section'
+      );
+
+    if (section) {
+      container = section;
+      break;
+    }
+  }
+
+  if (container) {
+    container.hidden = true;
+    container.setAttribute(
+      'aria-hidden',
+      'true'
+    );
+  }
+}
+
+
+/* ============================================================
  * UTILS
  * ============================================================ */
 
 async function safeJson(response) {
-  const text =
-    await response.text();
+  const text = await response.text();
 
   let data = {};
 
   try {
-    data =
-      text
-        ? JSON.parse(text)
-        : {};
+    data = text
+      ? JSON.parse(text)
+      : {};
   } catch {
+    const preview =
+      text
+        .replace(/\s+/g, ' ')
+        .slice(0, 120);
+
     throw new Error(
-      `서버 응답 오류 (HTTP ${response.status})`
+      `서버 응답 오류 (HTTP ${response.status})` +
+      (preview
+        ? `: ${preview}`
+        : '')
     );
   }
 
   if (!response.ok) {
     throw new Error(
       data?.error ||
+      data?.message ||
       `요청 실패 (HTTP ${response.status})`
     );
   }
@@ -148,12 +195,8 @@ async function safeJson(response) {
 }
 
 
-function num(
-  value,
-  fallback = 0
-) {
-  const n =
-    Number(value);
+function num(value, fallback = 0) {
+  const n = Number(value);
 
   return Number.isFinite(n)
     ? n
@@ -161,12 +204,8 @@ function num(
 }
 
 
-function fmtPrice(
-  value,
-  currency
-) {
-  const n =
-    Number(value);
+function fmtPrice(value, currency) {
+  const n = Number(value);
 
   if (!Number.isFinite(n)) {
     return '—';
@@ -177,28 +216,23 @@ function fmtPrice(
     currency === '원'
   ) {
     return (
-      Math.round(n)
-        .toLocaleString('ko-KR') +
+      Math.round(n).toLocaleString('ko-KR') +
       '원'
     );
   }
 
   return (
     '$' +
-    n.toLocaleString(
-      'en-US',
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }
-    )
+    n.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })
   );
 }
 
 
 function fmtChange(value) {
-  const n =
-    Number(value);
+  const n = Number(value);
 
   if (!Number.isFinite(n)) {
     return '';
@@ -212,26 +246,17 @@ function fmtChange(value) {
 }
 
 
-function formatNumber(
-  value,
-  digits = 2
-) {
-  const n =
-    Number(value);
+function formatNumber(value, digits = 2) {
+  const n = Number(value);
 
   if (!Number.isFinite(n)) {
     return '—';
   }
 
-  return n.toLocaleString(
-    'ko-KR',
-    {
-      minimumFractionDigits:
-        digits,
-      maximumFractionDigits:
-        digits
-    }
-  );
+  return n.toLocaleString('ko-KR', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  });
 }
 
 
@@ -245,13 +270,6 @@ function escapeHtml(value) {
 }
 
 
-/*
- * 뉴스 링크는 HTML escape만으로
- * javascript: 같은 scheme까지 막을 수 없다.
- *
- * 실제 RSS 링크만 허용하고
- * 이상한 URL은 #으로 처리한다.
- */
 function safeExternalUrl(value) {
   const raw =
     String(value || '').trim();
@@ -281,6 +299,132 @@ function safeExternalUrl(value) {
 }
 
 
+/* ============================================================
+ * TICKER
+ * ============================================================ */
+
+/*
+ * 검색 결과에서 한국 종목은 보통
+ *
+ * 005930
+ * 035420
+ * 000660
+ *
+ * 형태로 들어온다.
+ *
+ * Yahoo Finance에서는
+ *
+ * 005930.KS
+ * 035420.KS
+ *
+ * 형태가 필요하다.
+ *
+ * .KQ는 코스닥 fallback.
+ */
+
+function normalizeTicker(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+}
+
+
+function getChartTickerCandidates(ticker) {
+  const normalized =
+    normalizeTicker(ticker);
+
+  if (!normalized) {
+    return [];
+  }
+
+  const candidates = [];
+
+  function add(value) {
+    if (
+      value &&
+      !candidates.includes(value)
+    ) {
+      candidates.push(value);
+    }
+  }
+
+  /*
+   * 이미 Yahoo 형식이면 그대로 사용.
+   */
+  if (
+    normalized.endsWith('.KS') ||
+    normalized.endsWith('.KQ')
+  ) {
+    add(normalized);
+
+    return candidates;
+  }
+
+  /*
+   * 6자리 한국 종목코드.
+   */
+  if (/^\d{6}$/.test(normalized)) {
+    add(`${normalized}.KS`);
+    add(`${normalized}.KQ`);
+
+    /*
+     * 서버가 원래 ticker를
+     * 처리할 수 있는 경우를 위해 마지막에 원본도 시도.
+     */
+    add(normalized);
+
+    return candidates;
+  }
+
+  /*
+   * 미국/기타 ticker.
+   */
+  add(normalized);
+
+  return candidates;
+}
+
+
+function isValidChartData(data) {
+  if (!data) {
+    return false;
+  }
+
+  const dates =
+    Array.isArray(data.dates)
+      ? data.dates
+      : [];
+
+  const closes =
+    Array.isArray(data.closes)
+      ? data.closes
+      : [];
+
+  if (dates.length < 2) {
+    return false;
+  }
+
+  if (closes.length < 2) {
+    return false;
+  }
+
+  const validCloses =
+    closes.filter(
+      value =>
+        Number.isFinite(
+          Number(value)
+        )
+    );
+
+  return validCloses.length >= 2;
+}
+
+
+/* ============================================================
+ * SIGNAL
+ * ============================================================ */
+
 function signalClass(item) {
   if (
     item?.aiStrategy?.signal === 1 ||
@@ -305,9 +449,7 @@ function signalText(item) {
     return item.aiLabel;
   }
 
-  if (
-    item?.aiStrategy?.decision
-  ) {
+  if (item?.aiStrategy?.decision) {
     return item.aiStrategy.decision;
   }
 
@@ -353,23 +495,19 @@ function decisionClass(signal) {
  * ============================================================ */
 
 function formatNewsTime(value) {
-  const time =
-    Date.parse(value);
+  const time = Date.parse(value);
 
   if (!time) {
     return '';
   }
 
   return new Date(time)
-    .toLocaleString(
-      'ko-KR',
-      {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }
-    );
+    .toLocaleString('ko-KR', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 }
 
 
@@ -377,16 +515,12 @@ function newsCategoryLabel(category) {
   const map = {
     KOREA: 'KOREA',
     US: 'US MARKET',
-    SEMICONDUCTOR:
-      'SEMICONDUCTOR',
+    SEMICONDUCTOR: 'SEMICONDUCTOR',
     MACRO: 'MACRO',
     GLOBAL: 'GLOBAL'
   };
 
-  return (
-    map[category] ||
-    'MARKET'
-  );
+  return map[category] || 'MARKET';
 }
 
 
@@ -408,9 +542,13 @@ function renderMarketNews(articles) {
     return;
   }
 
+  /*
+   * 뉴스는 6개까지만 표시.
+   */
   newsList.innerHTML =
     articles
-      .slice(0, 20)
+      .filter(Boolean)
+      .slice(0, 6)
       .map(article => {
         const title =
           article?.title ||
@@ -482,7 +620,6 @@ async function loadMarketNews() {
 
   if (newsRefresh) {
     newsRefresh.disabled = true;
-
     newsRefresh.textContent =
       'LOADING...';
   }
@@ -496,14 +633,14 @@ async function loadMarketNews() {
   try {
     const response =
       await fetch(
-        '/api/market-news?limit=20',
+        '/api/market-news?limit=6',
         {
           cache: 'no-store'
         }
       );
 
     const data =
-      await response.json();
+      await safeJson(response);
 
     renderMarketNews(
       data?.articles
@@ -528,7 +665,6 @@ async function loadMarketNews() {
   } finally {
     if (newsRefresh) {
       newsRefresh.disabled = false;
-
       newsRefresh.textContent =
         'NEWS REFRESH';
     }
@@ -550,7 +686,6 @@ function renderHeadlines(headlines) {
 
   return `
     <ul class="headlines">
-
       ${headlines
         .slice(0, 5)
         .map(headline => {
@@ -592,32 +727,27 @@ function renderHeadlines(headlines) {
           `;
         })
         .join('')}
-
     </ul>
   `;
 }
 
 
 /* ============================================================
- * AI SUMMARY
+ * AI
  * ============================================================ */
 
 function renderAgentSummary(item) {
   const strategy =
-    item?.aiStrategy ||
-    {};
+    item?.aiStrategy || {};
 
   const day =
-    strategy.day ||
-    {};
+    strategy.day || {};
 
   const swing =
-    strategy.swing ||
-    {};
+    strategy.swing || {};
 
   const ensemble =
-    strategy.ensemble ||
-    {};
+    strategy.ensemble || {};
 
   const confidence =
     num(item?.aiConfidence);
@@ -675,16 +805,14 @@ function renderAgentSummary(item) {
         <span>
           DAY:
           ${escapeHtml(
-            day.decision ||
-            'WAIT'
+            day.decision || 'WAIT'
           )}
         </span>
 
         <span>
           SWING:
           ${escapeHtml(
-            swing.decision ||
-            'WAIT'
+            swing.decision || 'WAIT'
           )}
         </span>
 
@@ -712,10 +840,6 @@ function renderAgentSummary(item) {
   `;
 }
 
-
-/* ============================================================
- * EXECUTION
- * ============================================================ */
 
 function renderExecution(item) {
   const execution =
@@ -754,47 +878,37 @@ function renderExecution(item) {
 
         <div>
           <span>진입</span>
-          <b>
-            ${escapeHtml(
-              execution.entry
-            )}
-          </b>
+          <b>${escapeHtml(
+            execution.entry
+          )}</b>
         </div>
 
         <div>
           <span>손절</span>
-          <b>
-            ${escapeHtml(
-              execution.stop
-            )}
-          </b>
+          <b>${escapeHtml(
+            execution.stop
+          )}</b>
         </div>
 
         <div>
           <span>목표1</span>
-          <b>
-            ${escapeHtml(
-              execution.target1
-            )}
-          </b>
+          <b>${escapeHtml(
+            execution.target1
+          )}</b>
         </div>
 
         <div>
           <span>목표2</span>
-          <b>
-            ${escapeHtml(
-              execution.target2
-            )}
-          </b>
+          <b>${escapeHtml(
+            execution.target2
+          )}</b>
         </div>
 
         <div>
           <span>R/R</span>
-          <b>
-            ${escapeHtml(
-              execution.riskReward
-            )}
-          </b>
+          <b>${escapeHtml(
+            execution.riskReward
+          )}</b>
         </div>
 
       </div>
@@ -803,10 +917,6 @@ function renderExecution(item) {
   `;
 }
 
-
-/* ============================================================
- * UP PROBABILITY
- * ============================================================ */
 
 function renderUpProbability(up) {
   if (!up?.byHorizon) {
@@ -835,9 +945,7 @@ function renderUpProbability(up) {
       ${horizons
         .map(horizon => {
           const data =
-            up.byHorizon[
-              horizon
-            ];
+            up.byHorizon[horizon];
 
           if (
             !data ||
@@ -849,7 +957,6 @@ function renderUpProbability(up) {
                 <span>
                   ${horizon}거래일
                 </span>
-
                 <span>
                   데이터 부족
                 </span>
@@ -1471,7 +1578,7 @@ async function loadScan() {
 
 
 /* ============================================================
- * SEARCH RESULTS
+ * SEARCH
  * ============================================================ */
 
 function renderSearchResults(results) {
@@ -1554,10 +1661,8 @@ function renderSearchResults(results) {
         'click',
         () => {
           analyzeSearchedStock(
-            button.dataset
-              .searchTicker,
-            button.dataset
-              .searchLabel
+            button.dataset.searchTicker,
+            button.dataset.searchLabel
           );
         }
       );
@@ -1587,7 +1692,6 @@ async function searchStocks() {
 
   if (searchBtn) {
     searchBtn.disabled = true;
-
     searchBtn.textContent =
       'SEARCHING...';
   }
@@ -1639,7 +1743,6 @@ async function searchStocks() {
   } finally {
     if (searchBtn) {
       searchBtn.disabled = false;
-
       searchBtn.textContent =
         'SEARCH';
     }
@@ -1649,19 +1752,66 @@ async function searchStocks() {
 
 /* ============================================================
  * PRICE CHART
- *
- * 외부 Chart.js 의존 없음.
- * SVG 기반이라 기존 SIGNAL DESK UI와 충돌하지 않는다.
  * ============================================================ */
+
+function prepareChartSeries(
+  dates,
+  closes
+) {
+  const rawDates =
+    Array.isArray(dates)
+      ? dates
+      : [];
+
+  const rawCloses =
+    Array.isArray(closes)
+      ? closes
+      : [];
+
+  const length =
+    Math.min(
+      rawDates.length,
+      rawCloses.length
+    );
+
+  const result = [];
+
+  for (
+    let i = 0;
+    i < length;
+    i++
+  ) {
+    const value =
+      Number(rawCloses[i]);
+
+    if (
+      !Number.isFinite(value) ||
+      value <= 0
+    ) {
+      continue;
+    }
+
+    result.push({
+      date: rawDates[i],
+      close: value
+    });
+  }
+
+  return result;
+}
+
 
 function renderPriceChart(
   dates,
   closes
 ) {
-  if (
-    !Array.isArray(closes) ||
-    closes.length < 2
-  ) {
+  const series =
+    prepareChartSeries(
+      dates,
+      closes
+    );
+
+  if (series.length < 2) {
     return `
       <div class="search-chart-empty">
         차트 데이터가 부족합니다.
@@ -1670,31 +1820,36 @@ function renderPriceChart(
   }
 
   const values =
-    closes
-      .map(Number)
-      .filter(
-        Number.isFinite
-      );
-
-  if (values.length < 2) {
-    return `
-      <div class="search-chart-empty">
-        차트 데이터가 없습니다.
-      </div>
-    `;
-  }
+    series.map(
+      item => item.close
+    );
 
   const width = 900;
   const height = 300;
   const paddingX = 14;
   const paddingY = 20;
 
-  const min =
+  let min =
     Math.min(...values);
 
-  const max =
+  let max =
     Math.max(...values);
 
+  if (
+    !Number.isFinite(min) ||
+    !Number.isFinite(max)
+  ) {
+    return `
+      <div class="search-chart-empty">
+        유효한 차트 데이터가 없습니다.
+      </div>
+    `;
+  }
+
+  /*
+   * 가격이 완전히 동일한 경우에도
+   * 선이 중앙에 표시되도록 한다.
+   */
   const spread =
     max - min || 1;
 
@@ -1729,7 +1884,10 @@ function renderPriceChart(
             paddingY * 2
           );
 
-        return `${x},${y}`;
+        return (
+          `${x.toFixed(2)},` +
+          `${y.toFixed(2)}`
+        );
       })
       .join(' ');
 
@@ -1758,16 +1916,12 @@ function renderPriceChart(
       : 'change-down';
 
   const startDate =
-    Array.isArray(dates)
-      ? dates[0]
-      : '';
+    series[0]?.date || '';
 
   const endDate =
-    Array.isArray(dates)
-      ? dates[
-          dates.length - 1
-        ]
-      : '';
+    series[
+      series.length - 1
+    ]?.date || '';
 
   return `
     <div class="search-chart">
@@ -1875,6 +2029,80 @@ function renderPriceChart(
 }
 
 
+/*
+ * 실제 차트 요청.
+ *
+ * 005930
+ * → 005930.KS
+ * → 005930.KQ
+ * → 005930
+ *
+ * 순서로 시도한다.
+ */
+
+async function requestChartData(
+  ticker
+) {
+  const candidates =
+    getChartTickerCandidates(
+      ticker
+    );
+
+  if (!candidates.length) {
+    throw new Error(
+      '유효하지 않은 종목코드입니다.'
+    );
+  }
+
+  const errors = [];
+
+  for (
+    const candidate of candidates
+  ) {
+    try {
+      const response =
+        await fetch(
+          `/api/chart/${encodeURIComponent(
+            candidate
+          )}?range=6mo`,
+          {
+            cache: 'no-store'
+          }
+        );
+
+      const data =
+        await safeJson(response);
+
+      if (
+        isValidChartData(data)
+      ) {
+        return {
+          ...data,
+          requestedTicker:
+            ticker,
+          resolvedTicker:
+            candidate
+        };
+      }
+
+      errors.push(
+        `${candidate}: 차트 데이터 부족`
+      );
+
+    } catch (error) {
+      errors.push(
+        `${candidate}: ${error.message}`
+      );
+    }
+  }
+
+  throw new Error(
+    `차트 데이터를 가져오지 못했습니다. ` +
+    errors.join(' / ')
+  );
+}
+
+
 async function loadSearchChart(
   ticker
 ) {
@@ -1894,24 +2122,27 @@ async function loadSearchChart(
   `;
 
   try {
-    const response =
-      await fetch(
-        `/api/chart/${encodeURIComponent(
-          ticker
-        )}?range=6mo`,
-        {
-          cache: 'no-store'
-        }
-      );
-
     const data =
-      await safeJson(response);
+      await requestChartData(
+        ticker
+      );
 
     chartBox.innerHTML =
       renderPriceChart(
         data?.dates,
         data?.closes
       );
+
+    /*
+     * 차트에 어떤 ticker가 실제로 사용됐는지
+     * 개발자 콘솔에서 확인 가능.
+     */
+    console.info(
+      '[chart]',
+      ticker,
+      '→',
+      data?.resolvedTicker
+    );
 
   } catch (error) {
     console.error(
@@ -1921,13 +2152,39 @@ async function loadSearchChart(
 
     chartBox.innerHTML = `
       <div class="search-error">
+
         차트를 불러오지 못했습니다.
-        <br>
+
+        <br><br>
+
         ${escapeHtml(
           error.message
         )}
+
+        <br><br>
+
+        <button
+          type="button"
+          id="searchChartRetryBtn"
+          class="btn-refresh"
+        >
+          RETRY CHART
+        </button>
+
       </div>
     `;
+
+    document
+      .getElementById(
+        'searchChartRetryBtn'
+      )
+      ?.addEventListener(
+        'click',
+        () =>
+          loadSearchChart(
+            ticker
+          )
+      );
   }
 }
 
@@ -2082,14 +2339,6 @@ function getBacktestConfig() {
     backtestPeriod?.value ||
     '1y';
 
-  /*
-   * Yahoo 장중 데이터 제한 때문에
-   * 엔진이 안정적으로 사용하는 30m 데이터는
-   * 60d 범위로 고정한다.
-   *
-   * select의 1y/2y/3y/5y는
-   * UI 호환을 유지한다.
-   */
   return {
     range: '60d',
     interval: '30m',
@@ -2162,23 +2411,6 @@ async function runSearchBacktest(
 
 /* ============================================================
  * SEARCH ANALYSIS
- *
- * 핵심 수정:
- *
- * 기존:
- * Promise.all([
- *   signal,
- *   chart
- * ])
- *
- * 문제:
- * signal 하나만 실패해도
- * chart 결과까지 버려짐.
- *
- * 수정:
- * Promise.allSettled()
- *
- * → AI 실패와 차트 실패를 독립적으로 표시.
  * ============================================================ */
 
 async function analyzeSearchedStock(
@@ -2190,11 +2422,7 @@ async function analyzeSearchedStock(
   }
 
   const safeTicker =
-    String(
-      ticker || ''
-    )
-      .trim()
-      .toUpperCase();
+    normalizeTicker(ticker);
 
   const safeLabel =
     String(
@@ -2245,8 +2473,8 @@ async function analyzeSearchedStock(
   `;
 
   /*
-   * 검색한 종목의 AI와 차트를
-   * 서로 독립적으로 요청한다.
+   * AI와 차트를 동시에 요청하되
+   * 서로 독립적으로 처리.
    */
   const results =
     await Promise.allSettled([
@@ -2261,21 +2489,14 @@ async function analyzeSearchedStock(
         }
       ),
 
-      fetch(
-        `/api/chart/${encodeURIComponent(
-          safeTicker
-        )}?range=6mo`,
-        {
-          cache: 'no-store'
-        }
+      requestChartData(
+        safeTicker
       )
     ]);
 
-  /*
-   * --------------------------
-   * AI 결과
-   * --------------------------
-   */
+  /* --------------------------
+   * AI
+   * -------------------------- */
 
   let signalData = null;
   let signalError = '';
@@ -2302,11 +2523,9 @@ async function analyzeSearchedStock(
       'AI 분석 요청 실패';
   }
 
-  /*
-   * --------------------------
-   * Chart 결과
-   * --------------------------
-   */
+  /* --------------------------
+   * CHART
+   * -------------------------- */
 
   let chartData = null;
   let chartError = '';
@@ -2318,46 +2537,31 @@ async function analyzeSearchedStock(
     chartRequest?.status ===
     'fulfilled'
   ) {
-    try {
-      chartData =
-        await safeJson(
-          chartRequest.value
-        );
-    } catch (error) {
-      chartError =
-        error.message;
-    }
+    chartData =
+      chartRequest.value;
   } else {
     chartError =
       chartRequest?.reason?.message ||
       '차트 요청 실패';
   }
 
-  /*
-   * --------------------------
-   * AI 데이터 정리
-   * --------------------------
-   */
+  /* --------------------------
+   * AI DATA
+   * -------------------------- */
 
   const signal =
     signalData
-      ? num(
-          signalData?.signal
-        )
+      ? num(signalData?.signal)
       : 0;
 
   const confidence =
     signalData
-      ? num(
-          signalData?.confidence
-        )
+      ? num(signalData?.confidence)
       : 0;
 
   const strength =
     signalData
-      ? num(
-          signalData?.strength
-        )
+      ? num(signalData?.strength)
       : 0;
 
   const regime =
@@ -2373,20 +2577,14 @@ async function analyzeSearchedStock(
     );
 
   const decision =
-    decisionText(
-      signal
-    );
+    decisionText(signal);
 
   const decisionCls =
-    decisionClass(
-      signal
-    );
+    decisionClass(signal);
 
-  /*
-   * --------------------------
-   * 분석 화면
-   * --------------------------
-   */
+  /* --------------------------
+   * SCREEN
+   * -------------------------- */
 
   searchResult.innerHTML = `
     <div class="search-analysis">
@@ -2428,9 +2626,7 @@ async function analyzeSearchedStock(
       >
 
         <div>
-          <span>
-            AI SCORE
-          </span>
+          <span>AI SCORE</span>
 
           <strong>
             ${
@@ -2443,9 +2639,7 @@ async function analyzeSearchedStock(
 
 
         <div>
-          <span>
-            CONFIDENCE
-          </span>
+          <span>CONFIDENCE</span>
 
           <strong>
             ${
@@ -2458,9 +2652,7 @@ async function analyzeSearchedStock(
 
 
         <div>
-          <span>
-            REGIME
-          </span>
+          <span>REGIME</span>
 
           <strong>
             ${escapeHtml(
@@ -2503,17 +2695,19 @@ async function analyzeSearchedStock(
       >
 
         ${
-          chartData
+          chartData &&
+          isValidChartData(chartData)
             ? renderPriceChart(
                 chartData?.dates,
                 chartData?.closes
               )
             : `
-              <div
-                class="search-error"
-              >
+              <div class="search-error">
+
                 차트를 불러오지 못했습니다.
-                <br>
+
+                <br><br>
+
                 ${escapeHtml(
                   chartError ||
                   '차트 데이터 없음'
@@ -2528,6 +2722,7 @@ async function analyzeSearchedStock(
                 >
                   RETRY CHART
                 </button>
+
               </div>
             `
         }
@@ -2581,19 +2776,12 @@ async function analyzeSearchedStock(
   `;
 
 
-  /*
-   * 검색한 종목을
-   * 아래 백테스트 입력에도 자동 입력.
-   */
   if (backtestTicker) {
     backtestTicker.value =
       safeTicker;
   }
 
 
-  /*
-   * 백테스트
-   */
   document
     .getElementById(
       'searchedBacktestBtn'
@@ -2607,9 +2795,6 @@ async function analyzeSearchedStock(
     );
 
 
-  /*
-   * 검색 결과로 돌아가기
-   */
   document
     .getElementById(
       'searchBackBtn'
@@ -2620,9 +2805,6 @@ async function analyzeSearchedStock(
     );
 
 
-  /*
-   * AI 재분석
-   */
   document
     .getElementById(
       'searchRefreshAnalysisBtn'
@@ -2638,7 +2820,12 @@ async function analyzeSearchedStock(
 
 
   /*
-   * 차트 재시도
+   * 중요:
+   * 기존에는 차트 실패 시
+   * analyzeSearchedStock() 전체를 다시 호출해서
+   * AI까지 다시 분석했다.
+   *
+   * 이제는 차트만 재요청한다.
    */
   document
     .getElementById(
@@ -2647,9 +2834,8 @@ async function analyzeSearchedStock(
     ?.addEventListener(
       'click',
       () =>
-        analyzeSearchedStock(
-          safeTicker,
-          safeLabel
+        loadSearchChart(
+          safeTicker
         )
     );
 }
@@ -2657,6 +2843,9 @@ async function analyzeSearchedStock(
 
 /* ============================================================
  * GLOBAL BACKTEST
+ *
+ * 기존 함수는 남겨두지만
+ * 하단 UI는 hideGlobalBacktest()로 숨긴다.
  * ============================================================ */
 
 async function runGlobalBacktest() {
@@ -2668,9 +2857,9 @@ async function runGlobalBacktest() {
   }
 
   const ticker =
-    backtestTicker.value
-      .trim()
-      .toUpperCase();
+    normalizeTicker(
+      backtestTicker.value
+    );
 
   if (!ticker) {
     backtestResult.innerHTML = `
@@ -2684,7 +2873,6 @@ async function runGlobalBacktest() {
 
   if (backtestBtn) {
     backtestBtn.disabled = true;
-
     backtestBtn.textContent =
       'RUNNING...';
   }
@@ -2717,9 +2905,7 @@ async function runGlobalBacktest() {
       await safeJson(response);
 
     backtestResult.innerHTML =
-      renderSearchBacktest(
-        data
-      );
+      renderSearchBacktest(data);
 
   } catch (error) {
     console.error(
@@ -2738,9 +2924,7 @@ async function runGlobalBacktest() {
 
   } finally {
     if (backtestBtn) {
-      backtestBtn.disabled =
-        false;
-
+      backtestBtn.disabled = false;
       backtestBtn.textContent =
         'RUN BACKTEST';
     }
@@ -2790,9 +2974,7 @@ function renderAccount(data) {
           ? '+'
           : ''
       ) +
-      profit.toLocaleString(
-        'ko-KR'
-      );
+      profit.toLocaleString('ko-KR');
   }
 
   if (accountRate) {
@@ -2814,9 +2996,7 @@ function renderAccount(data) {
 
   if (
     holdingsList &&
-    Array.isArray(
-      data.holdings
-    )
+    Array.isArray(data.holdings)
   ) {
     if (!data.holdings.length) {
       holdingsList.innerHTML = `
@@ -2841,8 +3021,7 @@ function renderAccount(data) {
 
                 <span>
                   ${escapeHtml(
-                    item.ticker ||
-                    ''
+                    item.ticker || ''
                   )}
                 </span>
               </div>
@@ -2884,19 +3063,14 @@ async function loadAccount() {
       await fetch(
         '/api/account',
         {
-          cache:
-            'no-store'
+          cache: 'no-store'
         }
       );
 
     const data =
-      await safeJson(
-        response
-      );
+      await safeJson(response);
 
-    renderAccount(
-      data
-    );
+    renderAccount(data);
 
   } catch (error) {
     console.error(
@@ -2910,6 +3084,7 @@ async function loadAccount() {
     }
   }
 }
+
 
 /* ============================================================
  * EVENTS
@@ -2928,11 +3103,9 @@ if (searchInput) {
     'keydown',
     event => {
       if (
-        event.key ===
-        'Enter'
+        event.key === 'Enter'
       ) {
         event.preventDefault();
-
         searchStocks();
       }
     }
@@ -3007,8 +3180,7 @@ async function checkAuthAndStart() {
       await fetch(
         '/api/auth/status',
         {
-          cache:
-            'no-store'
+          cache: 'no-store'
         }
       );
 
@@ -3020,23 +3192,16 @@ async function checkAuthAndStart() {
       status.authed
     ) {
       startApp();
-
       return;
     }
 
     if (authGate) {
-      authGate.hidden =
-        false;
+      authGate.hidden = false;
     }
 
     authPassword?.focus();
 
   } catch {
-    /*
-     * 로컬 개발 환경에서
-     * auth API가 없는 경우에도
-     * UI는 정상적으로 시작한다.
-     */
     startApp();
   }
 }
@@ -3048,13 +3213,11 @@ authForm?.addEventListener(
     event.preventDefault();
 
     if (authSubmit) {
-      authSubmit.disabled =
-        true;
+      authSubmit.disabled = true;
     }
 
     if (authError) {
-      authError.hidden =
-        true;
+      authError.hidden = true;
     }
 
     try {
@@ -3089,8 +3252,7 @@ authForm?.addEventListener(
       }
 
       if (authGate) {
-        authGate.hidden =
-          true;
+        authGate.hidden = true;
       }
 
       startApp();
@@ -3101,14 +3263,12 @@ authForm?.addEventListener(
           error.message ||
           '네트워크 오류가 발생했습니다.';
 
-        authError.hidden =
-          false;
+        authError.hidden = false;
       }
 
     } finally {
       if (authSubmit) {
-        authSubmit.disabled =
-          false;
+        authSubmit.disabled = false;
       }
     }
   }
@@ -3125,6 +3285,12 @@ function startApp() {
   }
 
   appStarted = true;
+
+  /*
+   * 하단 글로벌 백테스트 제거.
+   */
+  hideGlobalBacktest();
+
 
   const logoutBtn =
     document.getElementById(
@@ -3148,23 +3314,17 @@ function startApp() {
       appStarted = false;
 
       if (authGate) {
-        authGate.hidden =
-          false;
+        authGate.hidden = false;
       }
 
       if (authPassword) {
-        authPassword.value =
-          '';
-
+        authPassword.value = '';
         authPassword.focus();
       }
     }
   );
 
-  /*
-   * 하나가 실패해도
-   * 나머지 시장 데이터는 계속 로딩한다.
-   */
+
   Promise.allSettled([
     loadMarketOverview(),
     loadScan(),
@@ -3186,6 +3346,12 @@ function startApp() {
 window.addEventListener(
   'DOMContentLoaded',
   () => {
+    /*
+     * DOM이 만들어진 뒤
+     * 글로벌 BACKTEST를 숨긴다.
+     */
+    hideGlobalBacktest();
+
     checkAuthAndStart();
   }
 );
