@@ -3069,45 +3069,44 @@ async function analyzeSearchedStock(
         )}
       </div>
 
+      <div id="searchedStockChart">
 
-      <div
-        id="searchedStockChart"
-      >
+  ${
+    chartData &&
+    isValidChartData(chartData)
+      ? renderPriceChart(
+          chartData.dates,
+          chartData.closes
+        )
+      : `
+        <div class="search-error">
+          차트를 불러오지 못했습니다.
 
-        ${
-          chartData &&
-          isValidChartData(chartData)
-            ? renderPriceChart(
-                chartData?.dates,
-                chartData?.closes
-              )
-            : `
-              <div class="search-error">
+          <br><br>
 
-                차트를 불러오지 못했습니다.
+          ${escapeHtml(
+            chartError ||
+            '차트 데이터 없음'
+          )}
 
-                <br><br>
+          <br><br>
 
-                ${escapeHtml(
-                  chartError ||
-                  '차트 데이터 없음'
-                )}
+          <button
+            type="button"
+            id="searchChartRetryBtn"
+            class="btn-refresh"
+          >
+            RETRY CHART
+          </button>
+        </div>
+      `
+  }
 
-                <br><br>
+</div>
+      
+                
 
-                <button
-                  type="button"
-                  id="searchChartRetryBtn"
-                  class="btn-refresh"
-                >
-                  RETRY CHART
-                </button>
-
-              </div>
-            `
-        }
-
-      </div>
+          
 
 
       <div
