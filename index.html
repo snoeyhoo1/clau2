@@ -16,7 +16,11 @@
   <title>SIGNAL DESK</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
 
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Big+Shoulders+Display:wght@600;700;800&display=swap"
@@ -172,7 +176,6 @@
 
   <!-- =========================================================
        PRIMARY NAVIGATION
-       기존 SIGNAL DESK 디자인을 유지한 증권사형 메뉴
        ========================================================= -->
 
   <nav
@@ -231,6 +234,14 @@
         data-nav-target="volume"
       >
         거래대금
+      </button>
+
+      <button
+        class="nav-btn nav-ranking"
+        type="button"
+        data-nav-target="volume-count"
+      >
+        거래량
       </button>
 
       <button
@@ -389,7 +400,12 @@
   </section>
 
 
+  <!-- =========================================================
+       MAIN
+       ========================================================= -->
+
   <main id="homeContent">
+
 
     <!-- =======================================================
          STOCK SEARCH
@@ -491,8 +507,8 @@
 
 
     <!-- =======================================================
-         RANKING PLACEHOLDER
-         다음 단계에서 실제 API 연결
+         MARKET RANKING
+         증권사 HTS / 토스 PC 스타일
          ======================================================= -->
 
     <section
@@ -500,9 +516,12 @@
       class="ranking-section"
     >
 
+
+      <!-- ================= HEADER ================= -->
+
       <div class="ranking-header">
 
-        <div>
+        <div class="ranking-title-area">
 
           <div class="section-kicker">
             MARKET SCREENER
@@ -513,43 +532,42 @@
           </h2>
 
           <p class="section-subtitle">
-            인기 · 거래대금 · 상승 · 하락 종목을 한눈에 확인
+            시장의 움직임을 한눈에 확인하세요
           </p>
 
         </div>
 
-        <div class="ranking-tabs">
+
+        <!-- 시장 선택 -->
+
+        <div
+          class="ranking-market-switch"
+          role="tablist"
+          aria-label="시장 선택"
+        >
 
           <button
-            class="ranking-tab active"
             type="button"
-            data-ranking="popular"
+            class="market-switch active"
+            data-ranking-market="all"
           >
-            인기
+            전체
           </button>
 
           <button
-            class="ranking-tab"
             type="button"
-            data-ranking="volume"
+            class="market-switch"
+            data-ranking-market="kr"
           >
-            거래대금
+            국내
           </button>
 
           <button
-            class="ranking-tab"
             type="button"
-            data-ranking="gainers"
+            class="market-switch"
+            data-ranking-market="us"
           >
-            상승
-          </button>
-
-          <button
-            class="ranking-tab"
-            type="button"
-            data-ranking="losers"
-          >
-            하락
+            미국
           </button>
 
         </div>
@@ -557,15 +575,105 @@
       </div>
 
 
-      <div class="ranking-grid">
+      <!-- ================= RANKING TABS ================= -->
 
-        <div class="ranking-panel">
+      <div
+        class="ranking-tabs"
+        role="tablist"
+        aria-label="종목 순위"
+      >
+
+        <button
+          class="ranking-tab active"
+          type="button"
+          data-ranking="popular"
+        >
+          <span class="ranking-tab-icon">
+            🔥
+          </span>
+          인기
+        </button>
+
+        <button
+          class="ranking-tab"
+          type="button"
+          data-ranking="volume"
+        >
+          <span class="ranking-tab-icon">
+            ₩
+          </span>
+          거래대금
+        </button>
+
+        <button
+          class="ranking-tab"
+          type="button"
+          data-ranking="volume-count"
+        >
+          <span class="ranking-tab-icon">
+            ⇅
+          </span>
+          거래량
+        </button>
+
+        <button
+          class="ranking-tab"
+          type="button"
+          data-ranking="gainers"
+        >
+          <span class="ranking-tab-icon">
+            ▲
+          </span>
+          상승
+        </button>
+
+        <button
+          class="ranking-tab"
+          type="button"
+          data-ranking="losers"
+        >
+          <span class="ranking-tab-icon">
+            ▼
+          </span>
+          하락
+        </button>
+
+        <button
+          class="ranking-tab ranking-tab-ai"
+          type="button"
+          data-ranking="ai"
+        >
+          <span class="ranking-tab-icon">
+            ◆
+          </span>
+          AI PICK
+        </button>
+
+      </div>
+
+
+      <!-- ================= MAIN RANKING GRID ================= -->
+
+      <div class="ranking-dashboard">
+
+
+        <!-- ================= MAIN ================= -->
+
+        <article class="ranking-panel ranking-main-panel">
 
           <div class="ranking-panel-header">
 
-            <span>
-              TOP 10
-            </span>
+            <div class="ranking-panel-heading">
+
+              <span class="ranking-panel-title">
+                실시간 인기종목
+              </span>
+
+              <span class="ranking-panel-description">
+                시장 관심도 기준 TOP 10
+              </span>
+
+            </div>
 
             <span class="ranking-live">
               ● LIVE
@@ -573,27 +681,76 @@
 
           </div>
 
+
+          <!-- table header -->
+
+          <div class="ranking-table-head">
+
+            <span>
+              순위
+            </span>
+
+            <span>
+              종목
+            </span>
+
+            <span>
+              현재가
+            </span>
+
+            <span>
+              등락률
+            </span>
+
+          </div>
+
+
           <div
             id="rankingList"
             class="ranking-list"
           >
 
             <div class="ranking-loading">
-              종목 순위를 준비하는 중...
+              시장 순위를 불러오는 중...
             </div>
 
           </div>
 
-        </div>
+
+          <button
+            type="button"
+            class="ranking-more"
+            data-nav-target="popular"
+          >
+            인기종목 전체보기
+            <span>→</span>
+          </button>
+
+        </article>
 
 
-        <div class="ranking-panel ai-ranking-panel">
+        <!-- ================= AI ================= -->
+
+        <article
+          class="
+            ranking-panel
+            ai-ranking-panel
+          "
+        >
 
           <div class="ranking-panel-header">
 
-            <span>
-              CLAU2 AI PICKS
-            </span>
+            <div class="ranking-panel-heading">
+
+              <span class="ranking-panel-title">
+                ◆ CLAU2 AI PICK
+              </span>
+
+              <span class="ranking-panel-description">
+                AI Score 기반 추천
+              </span>
+
+            </div>
 
             <span class="ai-badge">
               AI
@@ -601,18 +758,263 @@
 
           </div>
 
+
+          <div class="ai-ranking-head">
+
+            <span>
+              종목
+            </span>
+
+            <span>
+              SCORE
+            </span>
+
+            <span>
+              SIGNAL
+            </span>
+
+          </div>
+
+
           <div
             id="aiRankingList"
             class="ranking-list"
           >
 
             <div class="ranking-loading">
-              AI 종목 분석을 준비하는 중...
+              AI 종목을 분석하는 중...
             </div>
 
           </div>
 
-        </div>
+
+          <button
+            type="button"
+            class="ranking-more ranking-more-ai"
+            data-nav-target="ai"
+          >
+            AI PICK 전체보기
+            <span>→</span>
+          </button>
+
+        </article>
+
+      </div>
+
+
+      <!-- =====================================================
+           MOVERS
+           ===================================================== -->
+
+      <div class="ranking-movers">
+
+
+        <!-- 상승 -->
+
+        <article class="mover-panel">
+
+          <div class="mover-header">
+
+            <div>
+
+              <span class="mover-title">
+                ▲ 상승률 TOP
+              </span>
+
+              <span class="mover-description">
+                오늘 가장 많이 오른 종목
+              </span>
+
+            </div>
+
+            <button
+              type="button"
+              class="mover-more"
+              data-ranking-shortcut="gainers"
+            >
+              더보기
+            </button>
+
+          </div>
+
+
+          <div
+            id="gainersList"
+            class="mini-ranking-list"
+          >
+
+            <div class="ranking-loading">
+              상승 종목을 불러오는 중...
+            </div>
+
+          </div>
+
+        </article>
+
+
+        <!-- 하락 -->
+
+        <article class="mover-panel">
+
+          <div class="mover-header">
+
+            <div>
+
+              <span class="mover-title">
+                ▼ 하락률 TOP
+              </span>
+
+              <span class="mover-description">
+                오늘 가장 많이 내린 종목
+              </span>
+
+            </div>
+
+            <button
+              type="button"
+              class="mover-more"
+              data-ranking-shortcut="losers"
+            >
+              더보기
+            </button>
+
+          </div>
+
+
+          <div
+            id="losersList"
+            class="mini-ranking-list"
+          >
+
+            <div class="ranking-loading">
+              하락 종목을 불러오는 중...
+            </div>
+
+          </div>
+
+        </article>
+
+      </div>
+
+
+      <!-- =====================================================
+           MARKET STATISTICS
+           ===================================================== -->
+
+      <div class="ranking-bottom-grid">
+
+
+        <article class="ranking-stat-card">
+
+          <span class="ranking-stat-label">
+            거래대금 TOP
+          </span>
+
+          <strong
+            id="topTradingValue"
+            class="ranking-stat-value"
+          >
+            —
+          </strong>
+
+          <span
+            id="topTradingValueTicker"
+            class="ranking-stat-sub"
+          >
+            데이터 준비 중
+          </span>
+
+        </article>
+
+
+        <article class="ranking-stat-card">
+
+          <span class="ranking-stat-label">
+            거래량 TOP
+          </span>
+
+          <strong
+            id="topVolume"
+            class="ranking-stat-value"
+          >
+            —
+          </strong>
+
+          <span
+            id="topVolumeTicker"
+            class="ranking-stat-sub"
+          >
+            데이터 준비 중
+          </span>
+
+        </article>
+
+
+        <article class="ranking-stat-card">
+
+          <span class="ranking-stat-label">
+            상승 종목
+          </span>
+
+          <strong
+            id="rankingGainersCount"
+            class="
+              ranking-stat-value
+              ranking-stat-up
+            "
+          >
+            —
+          </strong>
+
+          <span class="ranking-stat-sub">
+            MARKET BREADTH
+          </span>
+
+        </article>
+
+
+        <article class="ranking-stat-card">
+
+          <span class="ranking-stat-label">
+            하락 종목
+          </span>
+
+          <strong
+            id="rankingLosersCount"
+            class="
+              ranking-stat-value
+              ranking-stat-down
+            "
+          >
+            —
+          </strong>
+
+          <span class="ranking-stat-sub">
+            MARKET BREADTH
+          </span>
+
+        </article>
+
+      </div>
+
+
+      <!-- =====================================================
+           RANKING FOOTER
+           ===================================================== -->
+
+      <div class="ranking-footer">
+
+        <span>
+          MARKET DATA
+        </span>
+
+        <span>
+          실시간 시장 데이터 기준
+        </span>
+
+        <span class="ranking-footer-live">
+          ● LIVE
+        </span>
 
       </div>
 
@@ -839,11 +1241,13 @@
     >
 
       <h2 class="section-title">
+
         AI 적중률
 
         <span class="env-badge env-real">
           TRACK RECORD
         </span>
+
       </h2>
 
       <div
@@ -976,12 +1380,21 @@
   </div>
 
 
+  <!-- =========================================================
+       FOOTER
+       ========================================================= -->
+
   <footer class="disclaimer">
     SIGNAL DESK · REAL MARKET DATA · REAL ACCOUNT
   </footer>
 
 
+  <!-- =========================================================
+       SCRIPTS
+       ========================================================= -->
+
   <script src="app.js"></script>
   <script src="ranking.js"></script>
+
 </body>
 </html>
