@@ -2205,3 +2205,116 @@ a {
   }
 
 }
+/* =========================================================
+   CLAU2 RANKING INTERACTION
+   ========================================================= */
+
+.ranking-row {
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    transform 0.12s ease;
+}
+
+.ranking-row:hover {
+  background: rgba(232, 163, 61, 0.055);
+}
+
+.ranking-row:active {
+  background: rgba(232, 163, 61, 0.09);
+}
+
+.ranking-stock strong {
+  transition: color 0.12s ease;
+}
+
+.ranking-row:hover .ranking-stock strong {
+  color: var(--amber);
+}
+
+.ranking-price {
+  color: var(--ink);
+}
+
+.ranking-loading {
+  line-height: 1.7;
+}
+
+.ranking-loading span {
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+
+/* AI panel */
+
+.ai-ranking-panel {
+  position: relative;
+}
+
+.ai-ranking-panel::before {
+  content: '';
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(232, 163, 61, 0.7),
+      transparent
+    );
+}
+
+.ai-score {
+  font-family: var(--display);
+}
+
+
+/* =========================================================
+   RANKING EMPTY / ERROR
+   ========================================================= */
+
+.ranking-empty {
+  min-height: 270px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  color: var(--ink-dim);
+
+  font-family: var(--mono);
+  font-size: 10px;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+  .ranking-row {
+    min-height: 52px;
+  }
+
+  .ranking-stock strong {
+    font-size: 11px;
+  }
+
+  .ranking-price {
+    font-size: 10px;
+  }
+
+}
