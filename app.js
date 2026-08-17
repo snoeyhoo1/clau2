@@ -1838,14 +1838,25 @@ async function searchStocks() {
   }
 }
 
-
 /* ============================================================
  * PRICE CHART
  * ============================================================ */
 
+let currentChartTicker = '';
+let currentChartRange = '6mo';
+
+const CHART_RANGES = {
+  '1mo': '1M',
+  '3mo': '3M',
+  '6mo': '6M',
+  '1y': '1Y',
+};
+
+
 function prepareChartSeries(
   dates,
-  closes
+  closes,
+  volumes = []
 ) {
   const rawDates =
     Array.isArray(dates)
@@ -1855,6 +1866,11 @@ function prepareChartSeries(
   const rawCloses =
     Array.isArray(closes)
       ? closes
+      : [];
+
+  const rawVolumes =
+    Array.isArray(volumes)
+      ? volumes
       : [];
 
   const length =
@@ -1870,19 +1886,30 @@ function prepareChartSeries(
     i < length;
     i++
   ) {
-    const value =
+    const close =
       Number(rawCloses[i]);
 
     if (
-      !Number.isFinite(value) ||
-      value <= 0
+      !Number.isFinite(close) ||
+      close <= 0
     ) {
       continue;
     }
 
+    const volume =
+      Number(rawVolumes[i]);
+
     result.push({
-      date: rawDates[i],
-      close: value
+      date:
+        rawDates[i],
+
+      close,
+
+      volume:
+        Number.isFinite(volume) &&
+        volume >= 0
+          ? volume
+          : 0
     });
   }
 
@@ -1892,12 +1919,15 @@ function prepareChartSeries(
 
 function renderPriceChart(
   dates,
-  closes
+  closes,
+  volumes = [],
+  meta = {}
 ) {
   const series =
     prepareChartSeries(
       dates,
-      closes
+      closes,
+      volumes
     );
 
   if (series.length < 2) {
@@ -1913,15 +1943,25 @@ function renderPriceChart(
       item => item.close
     );
 
+  const volumeValues =
+    series.map(
+      item => item.volume
+    );
+
   const width = 900;
-  const height = 300;
+  const priceHeight = 260;
+  const volumeHeight = 70;
+  const height =
+    priceHeight +
+    volumeHeight;
+
   const paddingX = 14;
   const paddingY = 20;
 
-  let min =
+  const min =
     Math.min(...values);
 
-  let max =
+  const max =
     Math.max(...values);
 
   if (
@@ -1935,12 +1975,16 @@ function renderPriceChart(
     `;
   }
 
-  /*
-   * 가격이 완전히 동일한 경우에도
-   * 선이 중앙에 표시되도록 한다.
-   */
   const spread =
     max - min || 1;
+
+  const chartWidth =
+    width -
+    paddingX * 2;
+
+  const priceAreaHeight =
+    priceHeight -
+    paddingY * 2;
 
   const points =
     values
@@ -1954,24 +1998,18 @@ function renderPriceChart(
               1
             )
           ) *
-          (
-            width -
-            paddingX * 2
-          );
+          chartWidth;
 
         const y =
-          height -
-          paddingY -
+          paddingY +
+          priceAreaHeight -
           (
             (
               value - min
             ) /
             spread
           ) *
-          (
-            height -
-            paddingY * 2
-          );
+          priceAreaHeight;
 
         return (
           `${x.toFixed(2)},` +
@@ -1979,6 +2017,76 @@ function renderPriceChart(
         );
       })
       .join(' ');
+
+
+  const maxVolume =
+    Math.max(
+      ...volumeValues,
+      0
+    );
+
+  const volumeBaseY =
+    height - 4;
+
+  const volumeBars =
+    maxVolume > 0
+      ? volumeValues
+          .map((volume, index) => {
+            if (
+              !Number.isFinite(volume) ||
+              volume <= 0
+            ) {
+              return '';
+            }
+
+            const x =
+              paddingX +
+              (
+                index /
+                Math.max(
+                  values.length - 1,
+                  1
+                )
+              ) *
+              chartWidth;
+
+            const barWidth =
+              Math.max(
+                1,
+                chartWidth /
+                values.length *
+                0.75
+              );
+
+            const barHeight =
+              (
+                volume /
+                maxVolume
+              ) *
+              (
+                volumeHeight - 12
+              );
+
+            const y =
+              volumeBaseY -
+              barHeight;
+
+            return `
+              <rect
+                x="${(
+                  x -
+                  barWidth / 2
+                ).toFixed(2)}"
+                y="${y.toFixed(2)}"
+                width="${barWidth.toFixed(2)}"
+                height="${barHeight.toFixed(2)}"
+                class="chart-volume"
+              />
+            `;
+          })
+          .join('')
+      : '';
+
 
   const first =
     values[0];
@@ -2012,12 +2120,33 @@ function renderPriceChart(
       series.length - 1
     ]?.date || '';
 
+  const range =
+    meta?.range ||
+    currentChartRange ||
+    '6mo';
+
+  const currentPrice =
+    Number(
+      meta?.currentPrice
+    );
+
+  const displayPrice =
+    Number.isFinite(
+      currentPrice
+    )
+      ? currentPrice
+      : last;
+
+  const resolvedTicker =
+    meta?.resolvedTicker ||
+    meta?.ticker ||
+    '';
+
+
   return `
     <div class="search-chart">
 
-      <div
-        class="search-chart-header"
-      >
+      <div class="search-chart-header">
 
         <div>
 
@@ -2046,41 +2175,130 @@ function renderPriceChart(
 
       </div>
 
-      <div
-        class="search-chart-wrap"
-      >
+
+      <div class="search-chart-ranges">
+
+        ${Object.entries(
+          CHART_RANGES
+        )
+          .map(
+            ([value, label]) => `
+              <button
+                type="button"
+                class="
+                  chart-range-btn
+                  ${
+                    value === range
+                      ? 'active'
+                      : ''
+                  }
+                "
+                data-chart-range="${value}"
+                data-chart-ticker="${escapeHtml(
+                  resolvedTicker
+                )}"
+              >
+                ${label}
+              </button>
+            `
+          )
+          .join('')}
+
+      </div>
+
+
+      <div class="search-chart-summary">
+
+        <div>
+          <span>CURRENT</span>
+
+          <strong>
+            ${formatNumber(
+              displayPrice,
+              2
+            )}
+          </strong>
+        </div>
+
+        <div>
+          <span>PERIOD</span>
+
+          <strong
+            class="${changeClass}"
+          >
+            ${change >= 0 ? '+' : ''}
+            ${change.toFixed(2)}%
+          </strong>
+        </div>
+
+        <div>
+          <span>HIGH</span>
+
+          <strong>
+            ${formatNumber(
+              max,
+              2
+            )}
+          </strong>
+        </div>
+
+        <div>
+          <span>LOW</span>
+
+          <strong>
+            ${formatNumber(
+              min,
+              2
+            )}
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="search-chart-wrap">
 
         <svg
           class="search-chart-svg"
           viewBox="0 0 ${width} ${height}"
           preserveAspectRatio="none"
           role="img"
-          aria-label="주가 차트"
+          aria-label="주가 및 거래량 차트"
         >
 
           <line
             x1="0"
-            y1="${height * 0.25}"
+            y1="${priceHeight * 0.25}"
             x2="${width}"
-            y2="${height * 0.25}"
+            y2="${priceHeight * 0.25}"
             class="chart-grid"
           />
 
           <line
             x1="0"
-            y1="${height * 0.5}"
+            y1="${priceHeight * 0.5}"
             x2="${width}"
-            y2="${height * 0.5}"
+            y2="${priceHeight * 0.5}"
             class="chart-grid"
           />
 
           <line
             x1="0"
-            y1="${height * 0.75}"
+            y1="${priceHeight * 0.75}"
             x2="${width}"
-            y2="${height * 0.75}"
+            y2="${priceHeight * 0.75}"
             class="chart-grid"
           />
+
+          <line
+            x1="0"
+            y1="${priceHeight}"
+            x2="${width}"
+            y2="${priceHeight}"
+            class="chart-grid"
+          />
+
+          ${volumeBars}
 
           <polyline
             points="${points}"
@@ -2091,16 +2309,14 @@ function renderPriceChart(
             stroke-linecap="round"
             stroke-linejoin="round"
             vector-effect="non-scaling-stroke"
-
           />
 
         </svg>
 
       </div>
 
-      <div
-        class="search-chart-footer"
-      >
+
+      <div class="search-chart-footer">
 
         <span>
           LOW
@@ -2124,19 +2340,40 @@ function renderPriceChart(
 }
 
 
-/*
- * 실제 차트 요청.
- *
- * 005930
- * → 005930.KS
- * → 005930.KQ
- * → 005930
- *
- * 순서로 시도한다.
- */
+function bindChartRangeButtons(
+  ticker
+) {
+  document
+    .querySelectorAll(
+      '[data-chart-range]'
+    )
+    .forEach(button => {
+      button.addEventListener(
+        'click',
+        () => {
+          const range =
+            button.dataset.chartRange;
+
+          if (!range) {
+            return;
+          }
+
+          currentChartRange =
+            range;
+
+          loadSearchChart(
+            ticker,
+            range
+          );
+        }
+      );
+    });
+}
+
 
 async function requestChartData(
-  ticker
+  ticker,
+  range = currentChartRange
 ) {
   const candidates =
     getChartTickerCandidates(
@@ -2159,7 +2396,9 @@ async function requestChartData(
         await fetch(
           `/api/chart/${encodeURIComponent(
             candidate
-          )}?range=6mo`,
+          )}?range=${encodeURIComponent(
+            range
+          )}`,
           {
             cache: 'no-store'
           }
@@ -2173,10 +2412,16 @@ async function requestChartData(
       ) {
         return {
           ...data,
+
           requestedTicker:
             ticker,
+
           resolvedTicker:
-            candidate
+            candidate,
+
+          range:
+            data?.range ||
+            range
         };
       }
 
@@ -2199,7 +2444,8 @@ async function requestChartData(
 
 
 async function loadSearchChart(
-  ticker
+  ticker,
+  range = currentChartRange
 ) {
   const chartBox =
     document.getElementById(
@@ -2210,8 +2456,18 @@ async function loadSearchChart(
     return;
   }
 
+  currentChartTicker =
+    ticker;
+
+  currentChartRange =
+    range;
+
   chartBox.innerHTML = `
     <div class="search-loading">
+      ${
+        CHART_RANGES[range] ||
+        '6M'
+      }
       차트를 불러오는 중...
     </div>
   `;
@@ -2219,24 +2475,42 @@ async function loadSearchChart(
   try {
     const data =
       await requestChartData(
-        ticker
+        ticker,
+        range
       );
 
     chartBox.innerHTML =
       renderPriceChart(
         data?.dates,
-        data?.closes
+        data?.closes,
+        data?.volumes,
+        {
+          ticker:
+            data?.requestedTicker ||
+            ticker,
+
+          resolvedTicker:
+            data?.resolvedTicker,
+
+          currentPrice:
+            data?.currentPrice,
+
+          range:
+            data?.range ||
+            range
+        }
       );
 
-    /*
-     * 차트에 어떤 ticker가 실제로 사용됐는지
-     * 개발자 콘솔에서 확인 가능.
-     */
+    bindChartRangeButtons(
+      ticker
+    );
+
     console.info(
       '[chart]',
       ticker,
       '→',
-      data?.resolvedTicker
+      data?.resolvedTicker,
+      range
     );
 
   } catch (error) {
@@ -2277,11 +2551,22 @@ async function loadSearchChart(
         'click',
         () =>
           loadSearchChart(
-            ticker
+            ticker,
+            range
           )
       );
   }
 }
+
+
+
+
+
+
+
+    
+          
+      
 
 
 /* ============================================================
