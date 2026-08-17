@@ -1279,10 +1279,11 @@
 
 
     try {
-
-      const response =
-        await fetch(
-          '/api/scan?market=all',
+     const response =
+       await fetch(
+         `/api/rankings?market=all&type=${encodeURIComponent(
+           currentRanking
+         )}&limit=10`,
           {
             method: 'GET',
             cache: 'no-store',
