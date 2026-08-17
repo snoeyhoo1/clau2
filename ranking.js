@@ -3,13 +3,12 @@
  * CLAU2 MARKET RANKING
  * ============================================================
  *
- * 증권사 HTS 스타일 종목 랭킹 UI
+ * 증권사 HTS 스타일 시장 랭킹
  *
- * 데이터:
- *   /api/scan
+ * API
+ *   GET /api/scan?market=all
  *
- * /api/scan이 제공하는:
- *
+ * 사용 데이터
  *   rankings.popular
  *   rankings.volume
  *   rankings.gainers
@@ -18,6 +17,9 @@
  *   rankings.ai
  *   rankings.confidence
  *   rankings.aiPicks
+ *
+ * 중요
+ *   별도의 /api/rankings Serverless Function을 만들지 않는다.
  *
  * ============================================================
  */
@@ -50,6 +52,14 @@
     );
 
 
+  const marketSwitches =
+    Array.from(
+      document.querySelectorAll(
+        '[data-ranking-market]'
+      )
+    );
+
+
   const navButtons =
     Array.from(
       document.querySelectorAll(
@@ -58,8 +68,16 @@
     );
 
 
+  const shortcutButtons =
+    Array.from(
+      document.querySelectorAll(
+        '[data-ranking-shortcut]'
+      )
+    );
+
+
   /*
-   * 랭킹 UI가 없는 페이지라면 종료.
+   * 랭킹 UI가 없는 페이지에서는 종료.
    */
 
   if (
@@ -76,6 +94,10 @@
 
   let currentRanking =
     'popular';
+
+
+  let currentMarket =
+    'all';
 
 
   let loading =
@@ -144,7 +166,6 @@
         "'",
         '&#039;'
       );
-
   }
 
 
@@ -202,10 +223,9 @@
           2,
 
         maximumFractionDigits:
-          2,
+          2
       }
     );
-
   }
 
 
@@ -235,7 +255,6 @@
         2
       ) +
       '%';
-
   }
 
 
@@ -320,7 +339,6 @@
     return n.toLocaleString(
       'ko-KR'
     );
-
   }
 
 
@@ -354,7 +372,6 @@
 
 
     return 'US';
-
   }
 
 
@@ -384,7 +401,6 @@
 
 
     return 'flat';
-
   }
 
 
@@ -427,7 +443,145 @@
 
 
     return 'wait';
+  }
 
+
+  function normalizeRow(
+    row,
+    index = 0
+  ) {
+
+    if (
+      !row ||
+      typeof row !== 'object'
+    ) {
+
+      return {
+        rank:
+          index + 1,
+
+        ticker:
+          '',
+
+        name:
+          '',
+
+        price:
+          null,
+
+        changePct:
+          null,
+
+        aiScore:
+          null,
+
+        aiConfidence:
+          null,
+
+        aiLabel:
+          '',
+
+        decision:
+          'WAIT',
+
+        regime:
+          '',
+
+        volume:
+          null,
+
+        tradingValue:
+          null
+      };
+    }
+
+
+    return {
+
+      rank:
+        number(
+          row.rank,
+          index + 1
+        ),
+
+      ticker:
+        String(
+          row.ticker ||
+          row.symbol ||
+          ''
+        ),
+
+      name:
+        String(
+          row.label ||
+          row.name ||
+          row.title ||
+          row.ticker ||
+          row.symbol ||
+          ''
+        ),
+
+      price:
+        number(
+          row.currentPrice ??
+          row.price ??
+          row.close
+        ),
+
+      changePct:
+        number(
+          row.changePct ??
+          row.change ??
+          row.changePercent ??
+          row.pctChange
+        ),
+
+      aiScore:
+        number(
+          row.aiScore ??
+          row.score
+        ),
+
+      aiConfidence:
+        number(
+          row.aiConfidence ??
+          row.confidence
+        ),
+
+      aiLabel:
+        String(
+          row.aiLabel ||
+          row.aiSignal ||
+          ''
+        ),
+
+      decision:
+        String(
+          row.decision ||
+          row.signal ||
+          'WAIT'
+        ),
+
+      regime:
+        String(
+          row.regime ||
+          row.marketType ||
+          ''
+        ),
+
+      volume:
+        number(
+          row.volume ??
+          row.volumeCount
+        ),
+
+      tradingValue:
+        number(
+          row.tradingValue ??
+          row.turnover ??
+          row.amount
+        )
+    };
   }
 
 
@@ -459,32 +613,47 @@
     ) {
 
       return cached.data;
+    }
+
+
+    const params =
+      new URLSearchParams();
+
+
+    if (
+      market &&
+      market !== 'all'
+    ) {
+
+      params.set(
+        'market',
+        market
+      );
 
     }
 
 
     /*
-     * 중요:
+     * 핵심:
      *
-     * /api/rankings를 호출하지 않는다.
-     *
-     * Vercel Hobby Serverless Function 제한 때문에
-     * 기존 /api/scan 하나를 사용한다.
+     * /api/rankings 사용 X
+     * /api/scan 하나만 사용.
      */
 
-    const params =
-      new URLSearchParams({
+    const query =
+      params.toString();
 
-        market,
 
-      });
+    const url =
+      query
+        ? `/api/scan?${query}`
+        : '/api/scan';
 
 
     const response =
       await fetch(
-        `/api/scan?${params.toString()}`,
+        url,
         {
-
           method:
             'GET',
 
@@ -492,12 +661,9 @@
             'no-store',
 
           headers: {
-
             Accept:
-              'application/json',
-
-          },
-
+              'application/json'
+          }
         }
       );
 
@@ -523,7 +689,6 @@
       throw new Error(
         '시장 데이터 응답을 읽을 수 없습니다.'
       );
-
     }
 
 
@@ -537,19 +702,19 @@
         data?.message ||
         `시장 데이터 조회 실패 (${response.status})`
       );
-
     }
 
 
-    /*
-     * /api/scan의 랭킹 데이터.
-     */
+    const rankings =
+      data?.rankings ||
+      {};
 
-    const rows =
+
+    const selected =
       Array.isArray(
-        data?.rankings?.[type]
+        rankings[type]
       )
-        ? data.rankings[type]
+        ? rankings[type]
         : Array.isArray(
             data?.ranked
           )
@@ -559,10 +724,14 @@
 
     const aiPicks =
       Array.isArray(
-        data?.rankings?.aiPicks
+        rankings.aiPicks
       )
-        ? data.rankings.aiPicks
-        : [];
+        ? rankings.aiPicks
+        : Array.isArray(
+            data?.aiPicks
+          )
+          ? data.aiPicks
+          : [];
 
 
     const normalized = {
@@ -571,16 +740,21 @@
         true,
 
       rows:
-        rows.slice(
-          0,
-          limit
-        ),
+        selected
+          .slice(
+            0,
+            limit
+          ),
 
       aiPicks:
-        aiPicks.slice(
-          0,
-          20
-        ),
+        aiPicks
+          .slice(
+            0,
+            20
+          ),
+
+      allRankings:
+        rankings,
 
       summary:
         data?.summary ||
@@ -592,116 +766,28 @@
 
       generatedAt:
         data?.generatedAt ||
-        null,
-
+        null
     };
 
 
     cache.set(
       key,
       {
-
         time:
           Date.now(),
 
         data:
-          normalized,
-
+          normalized
       }
     );
 
 
     return normalized;
-
   }
 
 
   /* ============================================================
-   * NORMALIZE
-   * ============================================================ */
-
-  function normalizeRow(
-    row
-  ) {
-
-    return {
-
-      rank:
-        number(
-          row?.rank,
-          0
-        ),
-
-      ticker:
-        String(
-          row?.ticker ||
-          ''
-        ),
-
-      name:
-        String(
-          row?.label ||
-          row?.name ||
-          row?.ticker ||
-          ''
-        ),
-
-      price:
-        number(
-          row?.currentPrice ??
-          row?.price
-        ),
-
-      changePct:
-        number(
-          row?.changePct
-        ),
-
-      aiScore:
-        number(
-          row?.aiScore
-        ),
-
-      aiConfidence:
-        number(
-          row?.aiConfidence
-        ),
-
-      aiLabel:
-        String(
-          row?.aiLabel ||
-          ''
-        ),
-
-      decision:
-        String(
-          row?.decision ||
-          'WAIT'
-        ),
-
-      regime:
-        String(
-          row?.regime ||
-          ''
-        ),
-
-      volume:
-        number(
-          row?.volume
-        ),
-
-      tradingValue:
-        number(
-          row?.tradingValue
-        ),
-
-    };
-
-  }
-
-
-  /* ============================================================
-   * RENDER NORMAL
+   * RENDER - MAIN
    * ============================================================ */
 
   function renderRanking(
@@ -725,25 +811,26 @@
 
       rankingList.innerHTML = `
         <div class="ranking-empty">
-          <div>
-            현재 표시할 종목 데이터가 없습니다.
-          </div>
+          현재 표시할 종목 데이터가 없습니다.
         </div>
       `;
 
       return;
-
     }
 
 
     rankingList.innerHTML =
       rows
         .map(
-          raw => {
+          (
+            raw,
+            index
+          ) => {
 
             const row =
               normalizeRow(
-                raw
+                raw,
+                index
               );
 
 
@@ -765,10 +852,6 @@
               );
 
 
-            /*
-             * 거래대금.
-             */
-
             if (
               type ===
               'volume'
@@ -778,13 +861,8 @@
                 formatAmount(
                   row.tradingValue
                 );
-
             }
 
-
-            /*
-             * 거래량.
-             */
 
             if (
               type ===
@@ -795,7 +873,6 @@
                 formatAmount(
                   row.volume
                 );
-
             }
 
 
@@ -861,19 +938,17 @@
 
               </button>
             `;
-
           }
         )
         .join('');
 
 
     bindRows();
-
   }
 
 
   /* ============================================================
-   * RENDER AI
+   * RENDER - AI
    * ============================================================ */
 
   function renderAiRanking(
@@ -896,25 +971,30 @@
 
       aiRankingList.innerHTML = `
         <div class="ranking-empty">
-          <div>
-            AI PICK 데이터가 없습니다.
-          </div>
+          AI PICK 데이터가 없습니다.
         </div>
       `;
 
       return;
-
     }
 
 
     aiRankingList.innerHTML =
       rows
+        .slice(
+          0,
+          10
+        )
         .map(
-          raw => {
+          (
+            raw,
+            index
+          ) => {
 
             const row =
               normalizeRow(
-                raw
+                raw,
+                index
               );
 
 
@@ -932,10 +1012,27 @@
                   );
 
 
+            const confidence =
+              row.aiConfidence === null
+                ? ''
+                : `${Math.round(
+                    row.aiConfidence
+                  )}%`;
+
+
+            const change =
+              changeClass(
+                row.changePct
+              );
+
+
             return `
               <button
                 type="button"
-                class="ranking-row ai-row"
+                class="
+                  ranking-row
+                  ai-row
+                "
                 data-ticker="${escapeHtml(
                   row.ticker
                 )}"
@@ -989,21 +1086,198 @@
                     ${type}
                   "
                 >
-                  ${escapeHtml(
-                    row.decision
+
+                  <strong>
+                    ${escapeHtml(
+                      row.decision ||
+                      'WAIT'
+                    )}
+                  </strong>
+
+                  ${
+                    confidence
+                      ? `
+                        <small>
+                          ${escapeHtml(
+                            confidence
+                          )}
+                        </small>
+                      `
+                      : ''
+                  }
+
+                </span>
+
+
+                <span
+                  class="
+                    ranking-change
+                    ${change}
+                  "
+                >
+                  ${formatPercent(
+                    row.changePct
                   )}
                 </span>
 
               </button>
             `;
-
           }
         )
         .join('');
 
 
     bindRows();
+  }
 
+
+  /* ============================================================
+   * RENDER - MINI RANKINGS
+   * ============================================================ */
+
+  function renderMiniRanking(
+    elementId,
+    rows,
+    type
+  ) {
+
+    const element =
+      document.getElementById(
+        elementId
+      );
+
+
+    if (
+      !element
+    ) {
+      return;
+    }
+
+
+    if (
+      !Array.isArray(
+        rows
+      ) ||
+      rows.length === 0
+    ) {
+
+      element.innerHTML = `
+        <div class="ranking-empty">
+          데이터가 없습니다.
+        </div>
+      `;
+
+      return;
+    }
+
+
+    element.innerHTML =
+      rows
+        .slice(
+          0,
+          5
+        )
+        .map(
+          (
+            raw,
+            index
+          ) => {
+
+            const row =
+              normalizeRow(
+                raw,
+                index
+              );
+
+
+            let value =
+              formatPercent(
+                row.changePct
+              );
+
+
+            if (
+              type ===
+              'volume'
+            ) {
+
+              value =
+                formatAmount(
+                  row.tradingValue
+                );
+            }
+
+
+            if (
+              type ===
+              'volume-count'
+            ) {
+
+              value =
+                formatAmount(
+                  row.volume
+                );
+            }
+
+
+            return `
+              <button
+                type="button"
+                class="mini-ranking-row"
+                data-ticker="${escapeHtml(
+                  row.ticker
+                )}"
+              >
+
+                <span
+                  class="mini-ranking-rank"
+                >
+                  ${escapeHtml(
+                    row.rank
+                  )}
+                </span>
+
+
+                <span
+                  class="mini-ranking-name"
+                >
+
+                  <strong>
+                    ${escapeHtml(
+                      row.name
+                    )}
+                  </strong>
+
+                  <small>
+                    ${escapeHtml(
+                      row.ticker
+                    )}
+                  </small>
+
+                </span>
+
+
+                <span
+                  class="
+                    mini-ranking-value
+                    ${changeClass(
+                      row.changePct
+                    )}
+                  "
+                >
+                  ${escapeHtml(
+                    value
+                  )}
+                </span>
+
+              </button>
+            `;
+          }
+        )
+        .join('');
+
+
+    bindRows();
   }
 
 
@@ -1015,10 +1289,22 @@
 
     document
       .querySelectorAll(
-        '.ranking-row'
+        '[data-ticker]'
       )
       .forEach(
         row => {
+
+          if (
+            row.dataset.rankingBound ===
+            'true'
+          ) {
+            return;
+          }
+
+
+          row.dataset.rankingBound =
+            'true';
+
 
           row.addEventListener(
             'click',
@@ -1035,13 +1321,17 @@
               }
 
 
+              /*
+               * 기존 검색 UI와 연결.
+               */
+
               const input =
                 document.getElementById(
                   'searchInput'
                 );
 
 
-              const searchButton =
+              const searchBtn =
                 document.getElementById(
                   'searchBtn'
                 );
@@ -1053,65 +1343,234 @@
 
                 input.value =
                   ticker;
-
               }
 
 
               if (
-                searchButton
+                searchBtn
               ) {
 
-                searchButton.click();
-
+                searchBtn.click();
 
                 window.scrollTo(
                   {
-
                     top:
                       0,
 
                     behavior:
-                      'smooth',
-
+                      'smooth'
                   }
                 );
 
-
                 return;
-
               }
 
 
-              try {
+              /*
+               * 다른 검색 이벤트가 있을 경우.
+               */
 
-                const url =
-                  new URL(
-                    window.location.href
-                  );
-
-
-                url.searchParams.set(
-                  'ticker',
-                  ticker
-                );
-
-
-                window.history.pushState(
-                  {},
-                  '',
-                  url
-                );
-
-              } catch {
-                // ignore
-              }
-
+              window.dispatchEvent(
+                new CustomEvent(
+                  'clau2:select-ticker',
+                  {
+                    detail: {
+                      ticker
+                    }
+                  }
+                )
+              );
             }
           );
-
         }
       );
+  }
 
+
+  /* ============================================================
+   * SUMMARY
+   * ============================================================ */
+
+  function updateSummary(
+    data
+  ) {
+
+    const summary =
+      data?.summary ||
+      {};
+
+
+    const breadth =
+      data?.breadth ||
+      {};
+
+
+    const gainers =
+      number(
+        summary.gainers ??
+        breadth.gainers
+      );
+
+
+    const losers =
+      number(
+        summary.losers ??
+        breadth.losers
+      );
+
+
+    const topValue =
+      document.getElementById(
+        'topTradingValue'
+      );
+
+
+    const topValueTicker =
+      document.getElementById(
+        'topTradingValueTicker'
+      );
+
+
+    const topVolume =
+      document.getElementById(
+        'topVolume'
+      );
+
+
+    const topVolumeTicker =
+      document.getElementById(
+        'topVolumeTicker'
+      );
+
+
+    const gainersCount =
+      document.getElementById(
+        'rankingGainersCount'
+      );
+
+
+    const losersCount =
+      document.getElementById(
+        'rankingLosersCount'
+      );
+
+
+    const volumeRows =
+      Array.isArray(
+        data?.allRankings?.volume
+      )
+        ? data.allRankings.volume
+        : [];
+
+
+    const volumeCountRows =
+      Array.isArray(
+        data?.allRankings?.[
+          'volume-count'
+        ]
+      )
+        ? data.allRankings[
+            'volume-count'
+          ]
+        : [];
+
+
+    const firstValue =
+      volumeRows[0]
+        ? normalizeRow(
+            volumeRows[0],
+            0
+          )
+        : null;
+
+
+    const firstVolume =
+      volumeCountRows[0]
+        ? normalizeRow(
+            volumeCountRows[0],
+            0
+          )
+        : null;
+
+
+    if (
+      topValue
+    ) {
+
+      topValue.textContent =
+        firstValue
+          ? formatAmount(
+              firstValue.tradingValue
+            )
+          : '—';
+    }
+
+
+    if (
+      topValueTicker
+    ) {
+
+      topValueTicker.textContent =
+        firstValue
+          ? (
+              firstValue.name ||
+              firstValue.ticker
+            )
+          : '데이터 없음';
+    }
+
+
+    if (
+      topVolume
+    ) {
+
+      topVolume.textContent =
+        firstVolume
+          ? formatAmount(
+              firstVolume.volume
+            )
+          : '—';
+    }
+
+
+    if (
+      topVolumeTicker
+    ) {
+
+      topVolumeTicker.textContent =
+        firstVolume
+          ? (
+              firstVolume.name ||
+              firstVolume.ticker
+            )
+          : '데이터 없음';
+    }
+
+
+    if (
+      gainersCount
+    ) {
+
+      gainersCount.textContent =
+        gainers === null
+          ? '—'
+          : gainers.toLocaleString(
+              'ko-KR'
+            );
+    }
+
+
+    if (
+      losersCount
+    ) {
+
+      losersCount.textContent =
+        losers === null
+          ? '—'
+          : losers.toLocaleString(
+              'ko-KR'
+            );
+    }
   }
 
 
@@ -1152,7 +1611,6 @@
           시장 순위를 불러오는 중...
         </div>
       `;
-
     }
 
 
@@ -1162,10 +1620,9 @@
 
       aiRankingList.innerHTML = `
         <div class="ranking-loading">
-          clau2 AI를 분석하는 중...
+          CLAU2 AI를 분석하는 중...
         </div>
       `;
-
     }
 
 
@@ -1174,7 +1631,7 @@
       const data =
         await fetchRanking(
           type,
-          'all',
+          currentMarket,
           10
         );
 
@@ -1187,11 +1644,19 @@
       }
 
 
+      /*
+       * 메인 랭킹
+       */
+
       renderRanking(
         data.rows,
         type
       );
 
+
+      /*
+       * AI PICK
+       */
 
       renderAiRanking(
         data.aiPicks
@@ -1199,9 +1664,36 @@
 
 
       /*
-       * 시장 breadth도
-       * ranking API 결과를 이용할 수 있도록
-       * 이벤트로 전달.
+       * 상승 / 하락
+       */
+
+      renderMiniRanking(
+        'gainersList',
+        data.allRankings?.gainers ||
+        [],
+        'gainers'
+      );
+
+
+      renderMiniRanking(
+        'losersList',
+        data.allRankings?.losers ||
+        [],
+        'losers'
+      );
+
+
+      /*
+       * 거래대금 / 거래량
+       */
+
+      updateSummary(
+        data
+      );
+
+
+      /*
+       * 외부 UI가 데이터를 받을 수 있게 이벤트 발행.
        */
 
       window.dispatchEvent(
@@ -1209,7 +1701,7 @@
           'clau2:ranking-loaded',
           {
             detail:
-              data,
+              data
           }
         )
       );
@@ -1225,6 +1717,13 @@
       );
 
 
+      const message =
+        escapeHtml(
+          error?.message ||
+          '알 수 없는 오류'
+        );
+
+
       if (
         rankingList
       ) {
@@ -1232,28 +1731,22 @@
         rankingList.innerHTML = `
           <div class="ranking-empty">
 
-            <div>
+            시장 데이터를
+            불러오지 못했습니다.
 
-              랭킹 데이터를 불러오지 못했습니다.
+            <br>
 
-              <br><br>
-
-              <span
-                style="
-                  color:var(--sell);
-                  font-size:10px;
-                "
-              >
-                ${escapeHtml(
-                  error.message
-                )}
-              </span>
-
-            </div>
+            <span
+              style="
+                color:var(--sell);
+                font-size:10px;
+              "
+            >
+              ${message}
+            </span>
 
           </div>
         `;
-
       }
 
 
@@ -1263,281 +1756,125 @@
 
         aiRankingList.innerHTML = `
           <div class="ranking-empty">
-            AI PICK을 불러오지 못했습니다.
+
+            AI PICK 데이터를
+            불러오지 못했습니다.
+
           </div>
         `;
-
       }
+
 
     } finally {
 
       loading =
         false;
-
     }
-
   }
 
 
   /* ============================================================
-   * TABS
+   * RANKING TAB
    * ============================================================ */
 
-  function activateTab(
-    type
-  ) {
-
-    currentRanking =
-      type;
-
-
-    rankingTabs.forEach(
-      tab => {
-
-        tab.classList.toggle(
-          'active',
-          tab.dataset.ranking ===
-            type
-        );
-
-      }
-    );
-
-
-    load(
-      type
-    );
-
-  }
-
-
   rankingTabs.forEach(
-    tab => {
+    button => {
 
-      tab.addEventListener(
+      button.addEventListener(
         'click',
         () => {
 
-          activateTab(
-            tab.dataset.ranking ||
-            'popular'
+          const type =
+            button.dataset.ranking;
+
+
+          if (
+            !type
+          ) {
+            return;
+          }
+
+
+          currentRanking =
+            type;
+
+
+          rankingTabs.forEach(
+            item => {
+
+              item.classList.toggle(
+                'active',
+                item === button
+              );
+            }
           );
 
+
+          load(
+            currentRanking
+          );
         }
       );
-
     }
   );
 
 
   /* ============================================================
-   * NAVIGATION
+   * MARKET SWITCH
    * ============================================================ */
 
-  function setNavActive(
-    target
-  ) {
+  marketSwitches.forEach(
+    button => {
 
-    navButtons.forEach(
-      button => {
+      button.addEventListener(
+        'click',
+        () => {
 
-        button.classList.toggle(
-          'active',
-          button.dataset.navTarget ===
-            target
-        );
-
-      }
-    );
+          const market =
+            button.dataset.rankingMarket;
 
 
-    document
-      .querySelectorAll(
-        '.quick-btn'
-      )
-      .forEach(
-        button => {
+          if (
+            !market
+          ) {
+            return;
+          }
 
-          button.classList.toggle(
-            'active',
-            button.dataset.navTarget ===
-              target
+
+          currentMarket =
+            market;
+
+
+          marketSwitches.forEach(
+            item => {
+
+              item.classList.toggle(
+                'active',
+                item === button
+              );
+            }
           );
 
+
+          /*
+           * 시장 변경 시 기존 캐시 제거.
+           */
+
+          cache.clear();
+
+
+          load(
+            currentRanking
+          );
         }
       );
-
-  }
-
-
-  function handleNavigation(
-    target
-  ) {
-
-    if (
-      !target
-    ) {
-      return;
     }
+  );
 
 
-    setNavActive(
-      target
-    );
-
-
-    const rankingTypes = {
-
-      popular:
-        'popular',
-
-      volume:
-        'volume',
-
-      gainers:
-        'gainers',
-
-      losers:
-        'losers',
-
-      'volume-count':
-        'volume-count',
-
-      ai:
-        'ai',
-
-    };
-
-
-    if (
-      rankingTypes[
-        target
-      ]
-    ) {
-
-      activateTab(
-        rankingTypes[
-          target
-        ]
-      );
-
-
-      const section =
-        document.getElementById(
-          'rankingSection'
-        );
-
-
-      if (
-        section
-      ) {
-
-        section.scrollIntoView(
-          {
-
-            behavior:
-              'smooth',
-
-            block:
-              'start',
-
-          }
-        );
-
-      }
-
-
-      return;
-
-    }
-
-
-    if (
-      target ===
-      'home'
-    ) {
-
-      window.scrollTo(
-        {
-
-          top:
-            0,
-
-          behavior:
-            'smooth',
-
-        }
-      );
-
-      return;
-
-    }
-
-
-    const sectionMap = {
-
-      market:
-        'marketOverview',
-
-      account:
-        'accountSection',
-
-      backtest:
-        'signalTrackSection',
-
-      watchlist:
-        'watchlistSection',
-
-      domestic:
-        'rankingSection',
-
-      global:
-        'rankingSection',
-
-      etf:
-        'rankingSection',
-
-    };
-
-
-    const sectionId =
-      sectionMap[
-        target
-      ];
-
-
-    if (
-      sectionId
-    ) {
-
-      const section =
-        document.getElementById(
-          sectionId
-        );
-
-
-      if (
-        section
-      ) {
-
-        section.scrollIntoView(
-          {
-
-            behavior:
-              'smooth',
-
-            block:
-              'start',
-
-          }
-        );
-
-      }
-
-    }
-
-  }
-
+  /* ============================================================
+   * NAV BUTTONS
+   * ============================================================ */
 
   navButtons.forEach(
     button => {
@@ -1546,95 +1883,206 @@
         'click',
         () => {
 
-          handleNavigation(
-            button.dataset.navTarget
-          );
+          const target =
+            button.dataset.navTarget;
 
+
+          if (
+            !target
+          ) {
+            return;
+          }
+
+
+          /*
+           * 랭킹 탭으로 이동.
+           */
+
+          const tab =
+            rankingTabs.find(
+              item =>
+                item.dataset.ranking ===
+                target
+            );
+
+
+          if (
+            tab
+          ) {
+
+            tab.click();
+
+            return;
+          }
+
+
+          /*
+           * AI 전체보기.
+           */
+
+          if (
+            target ===
+            'ai'
+          ) {
+
+            const aiTab =
+              rankingTabs.find(
+                item =>
+                  item.dataset.ranking ===
+                  'ai'
+              );
+
+
+            if (
+              aiTab
+            ) {
+
+              aiTab.click();
+
+              return;
+            }
+          }
+
+
+          /*
+           * 기존 네비게이션 시스템과 연동.
+           */
+
+          window.dispatchEvent(
+            new CustomEvent(
+              'clau2:ranking-nav',
+              {
+                detail: {
+                  target
+                }
+              }
+            )
+          );
         }
       );
-
     }
   );
 
 
   /* ============================================================
-   * REFRESH
+   * MINI RANKING SHORTCUT
    * ============================================================ */
 
-  function refresh() {
+  shortcutButtons.forEach(
+    button => {
 
-    cache.clear();
+      button.addEventListener(
+        'click',
+        () => {
+
+          const target =
+            button.dataset.rankingShortcut;
 
 
-    load(
-      currentRanking
-    );
+          if (
+            !target
+          ) {
+            return;
+          }
 
-  }
+
+          const tab =
+            rankingTabs.find(
+              item =>
+                item.dataset.ranking ===
+                target
+            );
 
 
-  window.addEventListener(
-    'clau2:refresh-ranking',
-    refresh
+          if (
+            tab
+          ) {
+
+            tab.click();
+
+            return;
+          }
+
+
+          /*
+           * 상승 / 하락 탭이 없다면
+           * 현재 랭킹 데이터를 직접 요청.
+           */
+
+          if (
+            target ===
+            'gainers' ||
+            target ===
+            'losers'
+          ) {
+
+            currentRanking =
+              target;
+
+
+            load(
+              target
+            );
+          }
+        }
+      );
+    }
   );
 
 
-  const refreshButton =
-    document.getElementById(
-      'refreshBtn'
-    );
+  /* ============================================================
+   * REFRESH EVENT
+   * ============================================================ */
 
+  window.addEventListener(
+    'clau2:refresh',
+    () => {
 
-  if (
-    refreshButton
-  ) {
+      cache.clear();
 
-    refreshButton.addEventListener(
-      'click',
-      () => {
-
-        window.setTimeout(
-          refresh,
-          200
-        );
-
-      }
-    );
-
-  }
+      load(
+        currentRanking
+      );
+    }
+  );
 
 
   /* ============================================================
-   * INIT
+   * PERIODIC REFRESH
    * ============================================================ */
 
-  function init() {
-
-    activateTab(
-      'popular'
-    );
-
-  }
+  const REFRESH_MS =
+    60 * 1000;
 
 
-  if (
-    document.readyState ===
-    'loading'
-  ) {
+  setInterval(
+    () => {
 
-    document.addEventListener(
-      'DOMContentLoaded',
-      init,
-      {
-        once:
-          true,
+      if (
+        document.hidden
+      ) {
+        return;
       }
-    );
 
-  } else {
 
-    init();
+      cache.clear();
 
-  }
+
+      load(
+        currentRanking
+      );
+
+    },
+    REFRESH_MS
+  );
+
+
+  /* ============================================================
+   * INITIAL LOAD
+   * ============================================================ */
+
+  load(
+    currentRanking
+  );
 
 })();
