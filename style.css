@@ -1622,3 +1622,586 @@ a {
     animation: none;
   }
 }
+
+
+/* =========================================================
+   BROKER-STYLE NAVIGATION
+   SIGNAL DESK 기존 디자인 확장
+   ========================================================= */
+
+.main-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+
+  background: rgba(20, 18, 15, 0.97);
+  border-bottom: 1px solid var(--line);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.main-nav-inner {
+  width: 100%;
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 32px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scrollbar-width: thin;
+}
+
+.main-nav-inner::-webkit-scrollbar {
+  height: 3px;
+}
+
+.main-nav-inner::-webkit-scrollbar-thumb {
+  background: var(--line);
+}
+
+.nav-btn {
+  position: relative;
+
+  height: 48px;
+
+  padding: 0 15px;
+
+  border: 0;
+  border-right: 1px solid rgba(51, 45, 32, 0.65);
+
+  background: transparent;
+  color: var(--ink-dim);
+
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.nav-btn:first-child {
+  border-left: 1px solid rgba(51, 45, 32, 0.65);
+}
+
+.nav-btn:hover {
+  color: var(--ink);
+  background: rgba(232, 163, 61, 0.05);
+}
+
+.nav-btn.active {
+  color: var(--amber);
+  background: rgba(232, 163, 61, 0.07);
+}
+
+.nav-btn.active::after {
+  content: '';
+
+  position: absolute;
+
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+
+  height: 2px;
+
+  background: var(--amber);
+}
+
+.nav-btn.nav-ranking {
+  color: #b9b29f;
+}
+
+.nav-btn.nav-ranking:hover {
+  color: var(--amber);
+}
+
+.nav-btn.nav-ai {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.nav-divider {
+  width: 10px;
+  height: 24px;
+
+  flex-shrink: 0;
+
+  border-right: 1px solid var(--line);
+
+  margin-right: 4px;
+}
+
+
+/* =========================================================
+   QUICK MARKET SCREENER
+   ========================================================= */
+
+.quick-menu {
+  border-bottom: 1px solid var(--line);
+
+  background: #100e0b;
+}
+
+.quick-menu-inner {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 9px 32px;
+
+  overflow-x: auto;
+
+  scrollbar-width: none;
+}
+
+.quick-menu-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-label {
+  flex-shrink: 0;
+
+  margin-right: 6px;
+
+  color: var(--ink-dim);
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.1em;
+
+  padding-right: 12px;
+
+  border-right: 1px solid var(--line);
+}
+
+.quick-btn {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 7px 11px;
+
+  border: 1px solid var(--line);
+  border-radius: 3px;
+
+  background: var(--bg-elevated);
+  color: var(--ink-dim);
+
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.quick-btn span {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.quick-btn:hover {
+  color: var(--ink);
+
+  border-color: #51462f;
+
+  background: var(--bg-raised);
+}
+
+.quick-btn.active {
+  color: var(--ink);
+
+  border-color: var(--amber);
+
+  background: rgba(232, 163, 61, 0.08);
+}
+
+.quick-btn-ai {
+  margin-left: 4px;
+
+  border-color: rgba(232, 163, 61, 0.4);
+
+  color: var(--amber);
+}
+
+
+/* =========================================================
+   RANKING SECTION
+   ========================================================= */
+
+.ranking-section {
+  margin: 24px 32px 0;
+
+  border-top: 1px solid var(--line);
+
+  padding-top: 22px;
+}
+
+.ranking-header {
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 14px;
+}
+
+.section-kicker {
+  color: var(--amber);
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.12em;
+
+  margin-bottom: 5px;
+}
+
+.ranking-tabs {
+  display: flex;
+
+  border: 1px solid var(--line);
+
+  background: var(--bg-elevated);
+}
+
+.ranking-tab {
+  border: 0;
+  border-right: 1px solid var(--line);
+
+  background: transparent;
+
+  color: var(--ink-dim);
+
+  padding: 8px 12px;
+
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.ranking-tab:last-child {
+  border-right: 0;
+}
+
+.ranking-tab:hover {
+  color: var(--ink);
+  background: var(--bg-raised);
+}
+
+.ranking-tab.active {
+  color: var(--amber);
+  background: rgba(232, 163, 61, 0.08);
+}
+
+.ranking-grid {
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+  gap: 12px;
+}
+
+.ranking-panel {
+  min-width: 0;
+
+  background: var(--bg-elevated);
+
+  border: 1px solid var(--line);
+}
+
+.ranking-panel-header {
+  min-height: 42px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 14px;
+
+  border-bottom: 1px solid var(--line);
+
+  color: var(--ink);
+
+  font-family: var(--display);
+  font-size: 12px;
+
+  letter-spacing: 0.05em;
+}
+
+.ranking-live {
+  color: var(--buy);
+
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.04em;
+}
+
+.ai-badge {
+  color: var(--amber);
+
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+
+  border: 1px solid rgba(232, 163, 61, 0.4);
+
+  padding: 3px 6px;
+
+  border-radius: 2px;
+}
+
+.ranking-list {
+  min-height: 270px;
+}
+
+.ranking-loading {
+  padding: 28px 16px;
+
+  color: var(--ink-dim);
+
+  font-size: 11px;
+}
+
+.ranking-row {
+  display: grid;
+
+  grid-template-columns: 30px minmax(0, 1fr) 90px 75px;
+
+  gap: 10px;
+
+  align-items: center;
+
+  min-height: 48px;
+
+  padding: 0 14px;
+
+  border-bottom: 1px solid rgba(51, 45, 32, 0.7);
+}
+
+.ranking-row:last-child {
+  border-bottom: 0;
+}
+
+.ranking-row:hover {
+  background: rgba(232, 163, 61, 0.035);
+}
+
+.ranking-rank {
+  color: var(--ink-dim);
+
+  font-size: 10px;
+
+  text-align: center;
+}
+
+.ranking-stock {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.ranking-stock strong {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--ink);
+
+  font-size: 12px;
+}
+
+.ranking-stock span {
+  color: var(--ink-dim);
+
+  font-size: 9px;
+}
+
+.ranking-price {
+  text-align: right;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ranking-change {
+  text-align: right;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ranking-change.up {
+  color: var(--buy);
+}
+
+.ranking-change.down {
+  color: var(--sell);
+}
+
+.ranking-change.flat {
+  color: var(--hold);
+}
+
+.ai-ranking-panel .ranking-row {
+  grid-template-columns: 30px minmax(0, 1fr) 65px 70px;
+}
+
+.ai-score {
+  color: var(--amber);
+
+  font-family: var(--display);
+
+  font-size: 15px;
+  font-weight: 700;
+
+  text-align: right;
+}
+
+.ai-signal {
+  text-align: right;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.04em;
+}
+
+.ai-signal.buy {
+  color: var(--buy);
+}
+
+.ai-signal.wait {
+  color: var(--hold);
+}
+
+.ai-signal.sell {
+  color: var(--sell);
+}
+
+
+/* =========================================================
+   SECTION TITLE EXTENSION
+   ========================================================= */
+
+.ranking-section .section-title {
+  margin-bottom: 3px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .main-nav-inner {
+    padding: 0 16px;
+  }
+
+  .quick-menu-inner {
+    padding: 9px 16px;
+  }
+
+  .ranking-section {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .ranking-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+@media (max-width: 640px) {
+
+  .topbar {
+    padding: 20px 16px 16px;
+  }
+
+  .brand-text p {
+    display: none;
+  }
+
+  .topbar-actions {
+    gap: 7px;
+  }
+
+  .updated {
+    display: none;
+  }
+
+  .btn-refresh,
+  .btn-install {
+    padding: 8px 10px;
+  }
+
+  .ranking-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .ranking-tabs {
+    width: 100%;
+
+    overflow-x: auto;
+  }
+
+  .ranking-tab {
+    flex: 1;
+
+    white-space: nowrap;
+  }
+
+  .ranking-row {
+    grid-template-columns: 26px minmax(0, 1fr) 75px;
+
+    gap: 7px;
+  }
+
+  .ranking-change {
+    display: none;
+  }
+
+  .ai-ranking-panel .ranking-row {
+    grid-template-columns: 26px minmax(0, 1fr) 58px;
+  }
+
+  .ai-signal {
+    display: none;
+  }
+
+}
