@@ -3,23 +3,21 @@
  * CLAU2 MARKET RANKING
  * ============================================================
  *
- * 기존 SIGNAL DESK 기능을 건드리지 않고
- * 홈 화면에 증권사식 종목 랭킹을 추가한다.
+ * 증권사 HTS 스타일 종목 랭킹 UI
  *
- * 데이터:
- *   /api/scan
+ * API:
+ *   /api/rankings
  *
- * 화면:
- *   - 인기
- *   - 거래대금
- *   - 상승
- *   - 하락
- *   - 거래량
- *   - AI PICK
+ * 지원:
+ *   popular
+ *   volume
+ *   gainers
+ *   losers
+ *   volume-count
+ *   ai
+ *   confidence
  *
- * 주의:
- *   scan API의 필드명이 일부 달라져도
- *   여러 후보 필드명을 순차적으로 확인하도록 작성했다.
+ * 기존 SIGNAL DESK 기능은 건드리지 않는다.
  * ============================================================
  */
 
@@ -32,10 +30,14 @@
    * ============================================================ */
 
   const rankingList =
-    document.getElementById('rankingList');
+    document.getElementById(
+      'rankingList'
+    );
 
   const aiRankingList =
-    document.getElementById('aiRankingList');
+    document.getElementById(
+      'aiRankingList'
+    );
 
   const rankingTabs =
     Array.from(
@@ -64,27 +66,28 @@
    * STATE
    * ============================================================ */
 
-  let scanData = null;
-
   let currentRanking =
     'popular';
 
   let loading = false;
 
-  let lastLoadedAt = 0;
-
+  let lastRequest = 0;
 
   const CACHE_MS =
-    60 * 1000;
+    30 * 1000;
+
+
+  const cache =
+    new Map();
 
 
   /* ============================================================
-   * BASIC UTILS
+   * UTILS
    * ============================================================ */
 
   function number(
     value,
-    fallback = 0
+    fallback = null
   ) {
     const n =
       Number(value);
@@ -92,58 +95,6 @@
     return Number.isFinite(n)
       ? n
       : fallback;
-  }
-
-
-  function firstNumber(
-    object,
-    keys
-  ) {
-    if (!object) {
-      return null;
-    }
-
-    for (const key of keys) {
-      const value =
-        object?.[key];
-
-      const n =
-        Number(value);
-
-      if (
-        Number.isFinite(n)
-      ) {
-        return n;
-      }
-    }
-
-    return null;
-  }
-
-
-  function firstValue(
-    object,
-    keys,
-    fallback = ''
-  ) {
-    if (!object) {
-      return fallback;
-    }
-
-    for (const key of keys) {
-      const value =
-        object?.[key];
-
-      if (
-        value !== undefined &&
-        value !== null &&
-        String(value).trim() !== ''
-      ) {
-        return value;
-      }
-    }
-
-    return fallback;
   }
 
 
@@ -178,21 +129,38 @@
 
   function formatPrice(
     value,
-    market
+    ticker
   ) {
     const n =
-      Number(value);
+      number(value);
+
 
     if (
-      !Number.isFinite(n)
+      n === null
     ) {
       return '—';
     }
 
+
+    const isKorea =
+      String(
+        ticker || ''
+      )
+        .toUpperCase()
+        .endsWith(
+          '.KS'
+        ) ||
+      String(
+        ticker || ''
+      )
+        .toUpperCase()
+        .endsWith(
+          '.KQ'
+        );
+
+
     if (
-      market === 'kr' ||
-      market === 'korea' ||
-      n >= 1000
+      isKorea
     ) {
       return Math.round(n)
         .toLocaleString(
@@ -200,11 +168,12 @@
         );
     }
 
+
     return n.toLocaleString(
       'en-US',
       {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
       }
     );
   }
@@ -214,13 +183,15 @@
     value
   ) {
     const n =
-      Number(value);
+      number(value);
+
 
     if (
-      !Number.isFinite(n)
+      n === null
     ) {
       return '—';
     }
+
 
     return (
       n >= 0
@@ -232,50 +203,65 @@
   }
 
 
-  function formatLargeNumber(
+  function formatAmount(
     value
   ) {
     const n =
-      Number(value);
+      number(value);
+
 
     if (
-      !Number.isFinite(n)
+      n === null
     ) {
       return '—';
     }
 
+
     const abs =
       Math.abs(n);
 
+
     if (
-      abs >= 1_000_000_000_000
+      abs >=
+      1_000_000_000_000
     ) {
       return (
-        (n / 1_000_000_000_000)
-          .toFixed(2) +
+        (
+          n /
+          1_000_000_000_000
+        ).toFixed(2) +
         '조'
       );
     }
 
+
     if (
-      abs >= 100_000_000
+      abs >=
+      100_000_000
     ) {
       return (
-        (n / 100_000_000)
-          .toFixed(1) +
+        (
+          n /
+          100_000_000
+        ).toFixed(1) +
         '억'
       );
     }
 
+
     if (
-      abs >= 10_000
+      abs >=
+      10_000
     ) {
       return (
-        (n / 10_000)
-          .toFixed(1) +
+        (
+          n /
+          10_000
+        ).toFixed(1) +
         '만'
       );
     }
+
 
     return n.toLocaleString(
       'ko-KR'
@@ -283,614 +269,286 @@
   }
 
 
-  function signalLabel(
-    item
+  function marketName(
+    ticker
   ) {
-    const raw =
-      firstValue(
-        item,
-        [
-          'aiLabel',
-          'decision',
-          'classification',
-          'signalText',
-          'strategy'
-        ],
-        ''
-      );
-
-    if (raw) {
-      return String(raw)
+    const value =
+      String(
+        ticker || ''
+      )
         .toUpperCase();
-    }
 
-    const signal =
-      firstNumber(
-        item,
-        [
-          'signal',
-          'aiSignal'
-        ]
-      );
 
     if (
-      signal === 1
+      value.endsWith('.KS')
     ) {
-      return 'BUY';
+      return 'KOSPI';
     }
+
 
     if (
-      signal === -1
+      value.endsWith('.KQ')
     ) {
-      return 'SELL';
+      return 'KOSDAQ';
     }
 
-    return 'WAIT';
+
+    return 'US';
+  }
+
+
+  function changeClass(
+    value
+  ) {
+    const n =
+      number(value, 0);
+
+
+    if (
+      n > 0
+    ) {
+      return 'up';
+    }
+
+
+    if (
+      n < 0
+    ) {
+      return 'down';
+    }
+
+
+    return 'flat';
   }
 
 
   function signalType(
-    label
+    value
   ) {
-    const value =
-      String(label)
+    const text =
+      String(
+        value || ''
+      )
         .toUpperCase();
 
+
     if (
-      value.includes('BUY') ||
-      value.includes('LONG')
+      text.includes('BUY') ||
+      text.includes('LONG')
     ) {
       return 'buy';
     }
 
+
     if (
-      value.includes('SELL') ||
-      value.includes('EXIT') ||
-      value.includes('SHORT')
+      text.includes('SELL') ||
+      text.includes('SHORT') ||
+      text.includes('EXIT')
     ) {
       return 'sell';
     }
+
 
     return 'wait';
   }
 
 
   /* ============================================================
-   * RESULT EXTRACTION
+   * API
    * ============================================================ */
 
-  function extractCandidates(
-    data
+  async function fetchRanking(
+    type,
+    market = 'all',
+    limit = 10
   ) {
-    if (!data) {
-      return [];
-    }
+
+    const key =
+      `${market}:${type}:${limit}`;
 
 
-    const candidates = [];
+    const cached =
+      cache.get(key);
 
 
-    function addArray(
-      value
+    if (
+      cached &&
+      Date.now() -
+        cached.time <
+        CACHE_MS
     ) {
-      if (
-        !Array.isArray(value)
-      ) {
-        return;
-      }
-
-      for (
-        const item of value
-      ) {
-        if (
-          item &&
-          typeof item === 'object'
-        ) {
-          candidates.push(item);
-        }
-      }
+      return cached.data;
     }
 
 
-    /*
-     * scanUniverse에서 흔히 사용할 수 있는
-     * 배열 이름들을 모두 확인한다.
-     */
-    addArray(
-      data.ranked
-    );
-    addArray(
-      data.results
-    );
+    const params =
+      new URLSearchParams({
 
-    addArray(
-      data.items
-    );
+        market,
 
-    addArray(
-      data.stocks
-    );
+        type,
 
-    addArray(
-      data.universe
-    );
-
-    addArray(
-      data.signals
-    );
-
-    addArray(
-      data.candidates
-    );
-
-    addArray(
-      data.buy
-    );
-
-    addArray(
-      data.sell
-    );
-
-    addArray(
-      data.buyCandidates
-    );
-
-    addArray(
-      data.sellCandidates
-    );
-
-
-    /*
-     * 결과가 { data: [...] } 형태인 경우.
-     */
-
-    addArray(
-      data.data
-    );
-
-
-    /*
-     * 중복 제거.
-     */
-
-    const seen =
-      new Set();
-
-    return candidates.filter(
-      item => {
-        const ticker =
-          firstValue(
-            item,
-            [
-              'ticker',
-              'symbol',
-              'code',
-              'stockCode'
-            ],
-            ''
-          );
-
-        const key =
+        limit:
           String(
-            ticker ||
-            JSON.stringify(item)
-          );
+            limit
+          ),
 
-        if (
-          seen.has(key)
-        ) {
-          return false;
+      });
+
+
+    const response =
+      await fetch(
+        `/api/rankings?${params.toString()}`,
+        {
+          method: 'GET',
+
+          cache:
+            'no-store',
+
+          headers: {
+            Accept:
+              'application/json',
+          },
         }
+      );
 
-        seen.add(key);
 
-        return true;
+    const text =
+      await response.text();
+
+
+    let data;
+
+
+    try {
+      data =
+        text
+          ? JSON.parse(text)
+          : {};
+    } catch {
+      throw new Error(
+        '랭킹 API 응답을 읽을 수 없습니다.'
+      );
+    }
+
+
+    if (
+      !response.ok ||
+      data?.ok === false
+    ) {
+      throw new Error(
+        data?.error ||
+        data?.message ||
+        `랭킹 조회 실패 (${response.status})`
+      );
+    }
+
+
+    cache.set(
+      key,
+      {
+        time:
+          Date.now(),
+
+        data,
       }
     );
+
+
+    return data;
   }
 
 
-  function normalizeItem(
-    item
+  /* ============================================================
+   * NORMALIZE
+   * ============================================================ */
+
+  function normalizeRow(
+    row
   ) {
-    const ticker =
-      firstValue(
-        item,
-        [
-          'ticker',
-          'symbol',
-          'code',
-          'stockCode'
-        ],
-        ''
-      );
-
-
-    const name =
-      firstValue(
-        item,
-        [
-          'name',
-          'stockName',
-          'companyName',
-          'displayName'
-        ],
-        ticker
-      );
-
-
-    const price =
-      firstNumber(
-        item,
-        [
-          'price',
-          'currentPrice',
-          'close',
-          'lastPrice',
-          'current'
-        ]
-      );
-
-
-    const change =
-      firstNumber(
-        item,
-        [
-          'changePercent',
-          'changePct',
-          'pctChange',
-          'rate',
-          'return',
-          'change'
-        ]
-      );
-
-
-    const volume =
-      firstNumber(
-        item,
-        [
-          'volume',
-          'tradeVolume',
-          'accVolume',
-          'totalVolume'
-        ]
-      );
-
-
-    const turnover =
-      firstNumber(
-        item,
-        [
-          'turnover',
-          'tradingValue',
-          'tradeValue',
-          'amount',
-          'tradingAmount'
-        ]
-      );
-
-
-    const aiScore =
-      firstNumber(
-        item,
-        [
-          'aiScore',
-          'score',
-          'finalScore',
-          'confidenceScore'
-        ]
-      );
-
-
-    const confidence =
-      firstNumber(
-        item,
-        [
-          'confidence',
-          'aiConfidence',
-          'probability'
-        ]
-      );
-
-
-    const market =
-      String(
-        firstValue(
-          item,
-          [
-            'market',
-            'exchange'
-          ],
-          ''
-        )
-      ).toLowerCase();
-
-
     return {
-      raw: item,
+
+      rank:
+        number(
+          row?.rank,
+          0
+        ),
 
       ticker:
         String(
-          ticker
+          row?.ticker ||
+          ''
         ),
 
       name:
         String(
-          name
+          row?.label ||
+          row?.name ||
+          row?.ticker ||
+          ''
         ),
 
-      price,
+      price:
+        number(
+          row?.price
+        ),
 
-      change,
+      changePct:
+        number(
+          row?.changePct
+        ),
 
-      volume,
+      aiScore:
+        number(
+          row?.aiScore
+        ),
 
-      turnover,
+      aiConfidence:
+        number(
+          row?.aiConfidence
+        ),
 
-      aiScore,
+      aiLabel:
+        String(
+          row?.aiLabel ||
+          ''
+        ),
 
-      confidence,
+      decision:
+        String(
+          row?.decision ||
+          'WAIT'
+        ),
 
-      market,
+      regime:
+        String(
+          row?.regime ||
+          ''
+        ),
 
-      signal:
-        signalLabel(
-          item
-        )
+      volume:
+        number(
+          row?.volume
+        ),
+
+      tradingValue:
+        number(
+          row?.tradingValue
+        ),
+
     };
   }
 
 
   /* ============================================================
-   * SORTING
-   * ============================================================ */
-
-  function normalizedItems() {
-    return extractCandidates(
-      scanData
-    )
-      .map(
-        normalizeItem
-      )
-      .filter(
-        item =>
-          item.ticker ||
-          item.name
-      );
-  }
-
-
-  function sortRanking(
-    items,
-    type
-  ) {
-    const list =
-      [...items];
-
-
-    if (
-      type === 'gainers'
-    ) {
-      return list
-        .sort(
-          (
-            a,
-            b
-          ) =>
-            number(
-              b.change
-            ) -
-            number(
-              a.change
-            )
-        )
-        .slice(
-          0,
-          10
-        );
-    }
-
-
-    if (
-      type === 'losers'
-    ) {
-      return list
-        .sort(
-          (
-            a,
-            b
-          ) =>
-            number(
-              a.change
-            ) -
-            number(
-              b.change
-            )
-        )
-        .slice(
-          0,
-          10
-        );
-    }
-
-
-    if (
-      type === 'volume'
-    ) {
-      return list
-        .sort(
-          (
-            a,
-            b
-          ) =>
-            number(
-              b.turnover
-            ) -
-            number(
-              a.turnover
-            )
-        )
-        .slice(
-          0,
-          10
-        );
-    }
-
-
-    if (
-      type === 'volume-count'
-    ) {
-      return list
-        .sort(
-          (
-            a,
-            b
-          ) =>
-            number(
-              b.volume
-            ) -
-            number(
-              a.volume
-            )
-        )
-        .slice(
-          0,
-          10
-        );
-    }
-
-
-    if (
-      type === 'ai'
-    ) {
-      return list
-        .filter(
-          item =>
-            Number.isFinite(
-              item.aiScore
-            )
-        )
-        .sort(
-          (
-            a,
-            b
-          ) =>
-            number(
-              b.aiScore
-            ) -
-            number(
-              a.aiScore
-            )
-        )
-        .slice(
-          0,
-          10
-        );
-    }
-
-
-    /*
-     * 인기:
-     *
-     * 단순 거래량 하나가 아니라
-     * 거래대금 + 거래량 + 절대 등락률을
-     * 합친 임시 popularity score.
-     *
-     * 이후 실제 인기 API가 생기면 교체한다.
-     */
-
-    return list
-      .sort(
-        (
-          a,
-          b
-        ) => {
-
-          const scoreA =
-            Math.log10(
-              1 +
-              Math.max(
-                0,
-                number(
-                  a.turnover
-                )
-              )
-            ) *
-              0.55 +
-            Math.log10(
-              1 +
-              Math.max(
-                0,
-                number(
-                  a.volume
-                )
-              )
-            ) *
-              0.30 +
-            Math.min(
-              20,
-              Math.abs(
-                number(
-                  a.change
-                )
-              )
-            ) *
-              0.15;
-
-
-          const scoreB =
-            Math.log10(
-              1 +
-              Math.max(
-                0,
-                number(
-                  b.turnover
-                )
-              )
-            ) *
-              0.55 +
-            Math.log10(
-              1 +
-              Math.max(
-                0,
-                number(
-                  b.volume
-                )
-              )
-            ) *
-              0.30 +
-            Math.min(
-              20,
-              Math.abs(
-                number(
-                  b.change
-                )
-              )
-            ) *
-              0.15;
-
-
-          return (
-            scoreB -
-            scoreA
-          );
-        }
-      )
-      .slice(
-        0,
-        10
-      );
-  }
-
-
-  /* ============================================================
-   * RENDER
+   * RENDER: NORMAL RANKING
    * ============================================================ */
 
   function renderRanking(
-    items
+    rows,
+    type
   ) {
+
     if (
       !rankingList
     ) {
@@ -899,11 +557,15 @@
 
 
     if (
-      !items.length
+      !Array.isArray(rows) ||
+      rows.length === 0
     ) {
+
       rankingList.innerHTML = `
-        <div class="ranking-loading">
-          현재 표시할 종목 데이터가 없습니다.
+        <div class="ranking-empty">
+          <div>
+            현재 표시할 종목 데이터가 없습니다.
+          </div>
         </div>
       `;
 
@@ -912,73 +574,120 @@
 
 
     rankingList.innerHTML =
-      items
+      rows
         .map(
-          (
-            item,
-            index
-          ) => {
+          raw => {
 
-            const changeClass =
-              number(
-                item.change
-              ) > 0
-                ? 'up'
-                : number(
-                    item.change
-                  ) < 0
-                    ? 'down'
-                    : 'flat';
+            const row =
+              normalizeRow(
+                raw
+              );
+
+
+            const change =
+              changeClass(
+                row.changePct
+              );
+
+
+            const market =
+              marketName(
+                row.ticker
+              );
+
+
+            let rightValue =
+              formatPercent(
+                row.changePct
+              );
+
+
+            /*
+             * 거래대금 순위에서는
+             * 거래대금이 실제 존재할 때만 표시.
+             */
+
+            if (
+              type === 'volume'
+            ) {
+              rightValue =
+                formatAmount(
+                  row.tradingValue
+                );
+            }
+
+
+            /*
+             * 거래량 순위.
+             */
+
+            if (
+              type === 'volume-count'
+            ) {
+              rightValue =
+                formatAmount(
+                  row.volume
+                );
+            }
 
 
             return `
               <div
                 class="ranking-row"
                 data-ticker="${escapeHtml(
-                  item.ticker
+                  row.ticker
                 )}"
               >
 
-                <span class="ranking-rank">
-                  ${index + 1}
+                <span
+                  class="ranking-rank"
+                >
+                  ${escapeHtml(
+                    row.rank
+                  )}
                 </span>
 
 
-                <div class="ranking-stock">
+                <div
+                  class="ranking-stock"
+                >
 
                   <strong>
                     ${escapeHtml(
-                      item.name
+                      row.name
                     )}
                   </strong>
 
                   <span>
                     ${escapeHtml(
-                      item.ticker
+                      row.ticker
+                    )}
+                    ·
+                    ${escapeHtml(
+                      market
                     )}
                   </span>
 
                 </div>
 
 
-                <div class="ranking-price">
-
+                <div
+                  class="ranking-price"
+                >
                   ${formatPrice(
-                    item.price,
-                    item.market
+                    row.price,
+                    row.ticker
                   )}
-
                 </div>
 
 
                 <div
-                  class="ranking-change ${changeClass}"
+                  class="
+                    ranking-change
+                    ${change}
+                  "
                 >
-
-                  ${formatPercent(
-                    item.change
-                  )}
-
+                  ${rightValue}
                 </div>
 
               </div>
@@ -988,13 +697,18 @@
         .join('');
 
 
-    bindRankingRows();
+    bindRows();
   }
 
 
+  /* ============================================================
+   * RENDER: AI
+   * ============================================================ */
+
   function renderAiRanking(
-    items
+    rows
   ) {
+
     if (
       !aiRankingList
     ) {
@@ -1003,13 +717,15 @@
 
 
     if (
-      !items.length
+      !Array.isArray(rows) ||
+      rows.length === 0
     ) {
+
       aiRankingList.innerHTML = `
-        <div class="ranking-loading">
-          AI 종목 데이터가 없습니다.
-          <br>
-          스캔 결과에 AI Score가 포함되면 자동으로 표시됩니다.
+        <div class="ranking-empty">
+          <div>
+            AI PICK 데이터가 없습니다.
+          </div>
         </div>
       `;
 
@@ -1018,70 +734,87 @@
 
 
     aiRankingList.innerHTML =
-      items
+      rows
         .map(
-          (
-            item,
-            index
-          ) => {
+          raw => {
+
+            const row =
+              normalizeRow(
+                raw
+              );
+
 
             const type =
               signalType(
-                item.signal
+                row.decision
               );
+
+
+            const score =
+              row.aiScore === null
+                ? '—'
+                : Math.round(
+                    row.aiScore
+                  );
 
 
             return `
               <div
                 class="ranking-row"
                 data-ticker="${escapeHtml(
-                  item.ticker
+                  row.ticker
                 )}"
               >
 
-                <span class="ranking-rank">
-                  ${index + 1}
+                <span
+                  class="ranking-rank"
+                >
+                  ${escapeHtml(
+                    row.rank
+                  )}
                 </span>
 
 
-                <div class="ranking-stock">
+                <div
+                  class="ranking-stock"
+                >
 
                   <strong>
                     ${escapeHtml(
-                      item.name
+                      row.name
                     )}
                   </strong>
 
                   <span>
                     ${escapeHtml(
-                      item.ticker
+                      row.ticker
+                    )}
+                    ·
+                    ${escapeHtml(
+                      row.regime ||
+                      'MARKET'
                     )}
                   </span>
 
                 </div>
 
 
-                <div class="ai-score">
-
-                  ${Number.isFinite(
-                    item.aiScore
-                  )
-                    ? Math.round(
-                        item.aiScore
-                      )
-                    : '—'}
-
+                <div
+                  class="ai-score"
+                >
+                  ${score}
                 </div>
 
 
                 <div
-                  class="ai-signal ${type}"
+                  class="
+                    ai-signal
+                    ${type}
+                  "
                 >
-
                   ${escapeHtml(
-                    item.signal
+                    row.decision
                   )}
-
                 </div>
 
               </div>
@@ -1091,160 +824,125 @@
         .join('');
 
 
-    bindRankingRows();
-  }
-
-
-  function renderCurrentRanking() {
-    const items =
-      normalizedItems();
-
-
-    const ranking =
-      sortRanking(
-        items,
-        currentRanking
-      );
-
-
-    renderRanking(
-      ranking
-    );
-
-
-    const aiRanking =
-      sortRanking(
-        items,
-        'ai'
-      );
-
-
-    renderAiRanking(
-      aiRanking
-    );
+    bindRows();
   }
 
 
   /* ============================================================
-   * ROW INTERACTION
+   * ROW CLICK
    * ============================================================ */
 
-  function bindRankingRows() {
-    const rows =
-      document.querySelectorAll(
+  function bindRows() {
+
+    document
+      .querySelectorAll(
         '.ranking-row'
-      );
+      )
+      .forEach(
+        row => {
+
+          row.addEventListener(
+            'click',
+            () => {
+
+              const ticker =
+                row.dataset.ticker;
 
 
-    rows.forEach(
-      row => {
-
-        row.addEventListener(
-          'click',
-          () => {
-
-            const ticker =
-              row.dataset.ticker;
-
-            if (
-              !ticker
-            ) {
-              return;
-            }
+              if (
+                !ticker
+              ) {
+                return;
+              }
 
 
-            /*
-             * 기존 검색 시스템을 우선 사용한다.
-             */
+              /*
+               * 기존 검색 기능을 활용한다.
+               */
 
-            const input =
-              document.getElementById(
-                'searchInput'
-              );
-
-            const button =
-              document.getElementById(
-                'searchBtn'
-              );
-
-
-            if (input) {
-              input.value =
-                ticker;
-            }
-
-
-            if (
-              button
-            ) {
-              button.click();
-
-              window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-              });
-
-              return;
-            }
-
-
-            /*
-             * 검색 버튼이 없더라도
-             * URL에 ticker를 남겨둔다.
-             */
-
-            try {
-              const url =
-                new URL(
-                  window.location.href
+              const input =
+                document.getElementById(
+                  'searchInput'
                 );
 
-              url.searchParams.set(
-                'ticker',
-                ticker
-              );
+              const searchButton =
+                document.getElementById(
+                  'searchBtn'
+                );
 
-              window.history.pushState(
-                {},
-                '',
-                url
-              );
 
-            } catch {
-              // no-op
+              if (
+                input
+              ) {
+                input.value =
+                  ticker;
+              }
+
+
+              if (
+                searchButton
+              ) {
+
+                searchButton.click();
+
+
+                window.scrollTo({
+                  top: 0,
+
+                  behavior:
+                    'smooth',
+                });
+
+
+                return;
+              }
+
+
+              /*
+               * 검색 UI가 없는 경우
+               * URL query만 업데이트.
+               */
+
+              try {
+
+                const url =
+                  new URL(
+                    window.location.href
+                  );
+
+
+                url.searchParams.set(
+                  'ticker',
+                  ticker
+                );
+
+
+                window.history.pushState(
+                  {},
+                  '',
+                  url
+                );
+
+              } catch {
+                // ignore
+              }
+
             }
+          );
 
-          }
-        );
-
-      }
-    );
+        }
+      );
   }
 
 
   /* ============================================================
-   * API
+   * LOAD
    * ============================================================ */
 
-  async function loadScan(
-    force = false
+  async function load(
+    type =
+      currentRanking
   ) {
-
-    const now =
-      Date.now();
-
-
-    if (
-      !force &&
-      scanData &&
-      now - lastLoadedAt <
-        CACHE_MS
-    ) {
-      renderCurrentRanking();
-
-      return;
-    }
-
 
     if (
       loading
@@ -1253,88 +951,98 @@
     }
 
 
-    loading = true;
+    loading =
+      true;
+
+
+    const requestId =
+      Date.now();
+
+
+    lastRequest =
+      requestId;
 
 
     if (
       rankingList
     ) {
+
       rankingList.innerHTML = `
         <div class="ranking-loading">
-          시장 종목 데이터를 불러오는 중...
+          ${type === 'ai'
+            ? 'clau2 AI가 종목을 분석하는 중...'
+            : '시장 순위를 불러오는 중...'}
         </div>
       `;
+
     }
 
 
     if (
       aiRankingList
     ) {
+
       aiRankingList.innerHTML = `
         <div class="ranking-loading">
-          clau2 AI 데이터를 불러오는 중...
+          AI PICK을 불러오는 중...
         </div>
       `;
+
     }
 
 
     try {
-     const response =
-       await fetch(
-         `/api/rankings?market=all&type=${encodeURIComponent(
-           currentRanking
-         )}&limit=10`,
-          {
-            method: 'GET',
-            cache: 'no-store',
-            headers: {
-              Accept:
-                'application/json'
-            }
-          }
+
+      /*
+       * 선택한 랭킹.
+       */
+
+      const data =
+        await fetchRanking(
+          type,
+          'all',
+          10
         );
 
 
-      const text =
-        await response.text();
-
-
-      let data =
-        null;
-
-
-      try {
-        data =
-          text
-            ? JSON.parse(text)
-            : {};
-      } catch {
-        throw new Error(
-          '시장 스캔 API가 JSON을 반환하지 않았습니다.'
-        );
-      }
-
+      /*
+       * 이미 더 최신 요청이 실행됐다면
+       * 현재 결과를 화면에 덮어쓰지 않는다.
+       */
 
       if (
-        !response.ok
+        requestId !==
+        lastRequest
       ) {
-        throw new Error(
-          data?.error ||
-          data?.message ||
-          `시장 스캔 실패 (${response.status})`
-        );
+        return;
       }
 
 
-      scanData =
-        data;
+      const rows =
+        Array.isArray(
+          data?.rows
+        )
+          ? data.rows
+          : [];
 
 
-      lastLoadedAt =
-        Date.now();
+      const aiPicks =
+        Array.isArray(
+          data?.aiPicks
+        )
+          ? data.aiPicks
+          : [];
 
 
-      renderCurrentRanking();
+      renderRanking(
+        rows,
+        type
+      );
+
+
+      renderAiRanking(
+        aiPicks
+      );
 
 
     } catch (
@@ -1342,7 +1050,7 @@
     ) {
 
       console.error(
-        '[clau2 ranking]',
+        '[CLAU2 RANKING]',
         error
       );
 
@@ -1350,36 +1058,46 @@
       if (
         rankingList
       ) {
+
         rankingList.innerHTML = `
-          <div class="ranking-loading">
+          <div class="ranking-empty">
 
-            시장 순위를 불러오지 못했습니다.
+            <div>
 
-            <br><br>
+              랭킹 데이터를 불러오지 못했습니다.
 
-            <span style="color:var(--sell)">
-              ${escapeHtml(
-                error.message
-              )}
-            </span>
+              <br><br>
+
+              <span
+                style="
+                  color:var(--sell);
+                  font-size:10px;
+                "
+              >
+                ${escapeHtml(
+                  error.message
+                )}
+              </span>
+
+            </div>
 
           </div>
         `;
+
       }
 
 
       if (
         aiRankingList
       ) {
+
         aiRankingList.innerHTML = `
-          <div class="ranking-loading">
-
-            AI 순위를 불러오지 못했습니다.
-
+          <div class="ranking-empty">
+            AI PICK을 불러오지 못했습니다.
           </div>
         `;
-      }
 
+      }
 
     } finally {
 
@@ -1387,14 +1105,15 @@
         false;
 
     }
+
   }
 
 
   /* ============================================================
-   * RANKING TABS
+   * TABS
    * ============================================================ */
 
-  function setRanking(
+  function activateTab(
     type
   ) {
 
@@ -1415,7 +1134,10 @@
     );
 
 
-    renderCurrentRanking();
+    load(
+      type
+    );
+
   }
 
 
@@ -1426,7 +1148,7 @@
         'click',
         () => {
 
-          setRanking(
+          activateTab(
             tab.dataset.ranking ||
             'popular'
           );
@@ -1439,7 +1161,7 @@
 
 
   /* ============================================================
-   * NAVIGATION
+   * NAV
    * ============================================================ */
 
   function setNavActive(
@@ -1449,12 +1171,10 @@
     navButtons.forEach(
       button => {
 
-        const value =
-          button.dataset.navTarget;
-
         button.classList.toggle(
           'active',
-          value === target
+          button.dataset.navTarget ===
+            target
         );
 
       }
@@ -1496,63 +1216,40 @@
     );
 
 
-    /*
-     * 랭킹 관련 메뉴.
-     */
+    const rankingTypes = {
 
-    const rankingTargets = [
-      'popular',
-      'volume',
-      'gainers',
-      'losers',
-      'volume-count',
-      'high52',
-      'low52',
-      'ai'
-    ];
+      popular:
+        'popular',
+
+      volume:
+        'volume',
+
+      gainers:
+        'gainers',
+
+      losers:
+        'losers',
+
+      'volume-count':
+        'volume-count',
+
+      ai:
+        'ai',
+
+    };
 
 
     if (
-      rankingTargets.includes(
+      rankingTypes[
         target
-      )
+      ]
     ) {
 
-      if (
-        target === 'ai'
-      ) {
-        setRanking(
-          'ai'
-        );
-      } else if (
-        target === 'volume-count'
-      ) {
-        setRanking(
-          'volume-count'
-        );
-      } else if (
-        target === 'gainers'
-      ) {
-        setRanking(
-          'gainers'
-        );
-      } else if (
-        target === 'losers'
-      ) {
-        setRanking(
-          'losers'
-        );
-      } else if (
-        target === 'volume'
-      ) {
-        setRanking(
-          'volume'
-        );
-      } else {
-        setRanking(
-          'popular'
-        );
-      }
+      activateTab(
+        rankingTypes[
+          target
+        ]
+      );
 
 
       const section =
@@ -1564,10 +1261,15 @@
       if (
         section
       ) {
+
         section.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
+          behavior:
+            'smooth',
+
+          block:
+            'start',
         });
+
       }
 
 
@@ -1575,26 +1277,20 @@
     }
 
 
-    /*
-     * 홈.
-     */
-
     if (
       target === 'home'
     ) {
 
       window.scrollTo({
         top: 0,
-        behavior: 'smooth'
+
+        behavior:
+          'smooth',
       });
 
       return;
     }
 
-
-    /*
-     * 기존 화면의 섹션으로 연결.
-     */
 
     const sectionMap = {
 
@@ -1605,22 +1301,24 @@
         'accountSection',
 
       backtest:
-        'signalTrackSection'
+        'signalTrackSection',
 
     };
 
 
-    const id =
-      sectionMap[target];
+    const sectionId =
+      sectionMap[
+        target
+      ];
 
 
     if (
-      id
+      sectionId
     ) {
 
       const section =
         document.getElementById(
-          id
+          sectionId
         );
 
 
@@ -1629,8 +1327,11 @@
       ) {
 
         section.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
+          behavior:
+            'smooth',
+
+          block:
+            'start',
         });
 
       }
@@ -1659,44 +1360,43 @@
 
 
   /* ============================================================
-   * REFRESH BUTTON
+   * REFRESH
    * ============================================================ */
+
+  function refresh() {
+
+    cache.clear();
+
+    load(
+      currentRanking
+    );
+
+  }
+
 
   window.addEventListener(
     'clau2:refresh-ranking',
-    () => {
-      loadScan(
-        true
-      );
-    }
+    refresh
   );
 
 
-  /*
-   * 기존 REFRESH 버튼에도 연결.
-   */
-
-  const refresh =
+  const refreshButton =
     document.getElementById(
       'refreshBtn'
     );
 
 
   if (
-    refresh
+    refreshButton
   ) {
 
-    refresh.addEventListener(
+    refreshButton.addEventListener(
       'click',
       () => {
 
         window.setTimeout(
-          () => {
-            loadScan(
-              true
-            );
-          },
-          150
+          refresh,
+          200
         );
 
       }
@@ -1706,26 +1406,13 @@
 
 
   /* ============================================================
-   * INITIALIZE
+   * INIT
    * ============================================================ */
 
   function init() {
 
-    /*
-     * 초기에는 인기순.
-     */
-
-    setRanking(
+    activateTab(
       'popular'
-    );
-
-
-    /*
-     * API 호출.
-     */
-
-    loadScan(
-      false
     );
 
   }
@@ -1740,7 +1427,7 @@
       'DOMContentLoaded',
       init,
       {
-        once: true
+        once: true,
       }
     );
 
