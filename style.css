@@ -2825,3 +2825,668 @@ a {
   }
 
 }
+/* ============================================================
+   CLAU2 — REAL KIS ORDER MODAL
+   실주문 UI 확장
+   기존 SIGNAL DESK 디자인 유지
+   ============================================================ */
+
+.order-modal {
+  width: 100%;
+  max-width: 520px;
+}
+
+.order-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.order-modal-header-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.order-modal-header-main strong {
+  font-family: var(--display);
+  font-size: 18px;
+  letter-spacing: 0.03em;
+}
+
+.order-modal-header-main span {
+  color: var(--ink-dim);
+  font-size: 10px;
+}
+
+.order-market-badge {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink-dim);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.order-market-badge.domestic {
+  color: var(--buy);
+  border-color: rgba(143, 178, 93, 0.35);
+  background: rgba(143, 178, 93, 0.06);
+}
+
+.order-market-badge.overseas {
+  color: var(--amber);
+  border-color: rgba(232, 163, 61, 0.35);
+  background: rgba(232, 163, 61, 0.06);
+}
+
+
+/* ============================================================
+   MARKET / SIDE TABS
+   ============================================================ */
+
+.order-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 4px;
+}
+
+.order-tab {
+  appearance: none;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-dim);
+  padding: 9px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.order-tab:hover {
+  color: var(--ink);
+  background: var(--bg-raised);
+}
+
+.order-tab.active {
+  color: var(--amber);
+  background: rgba(232, 163, 61, 0.09);
+}
+
+
+/* ============================================================
+   BUY / SELL
+   ============================================================ */
+
+.order-side-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.order-side {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--ink-dim);
+  padding: 11px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.order-side:hover {
+  background: var(--bg-raised);
+}
+
+.order-side.buy.active {
+  color: var(--buy);
+  border-color: var(--buy);
+  background: rgba(143, 178, 93, 0.08);
+}
+
+.order-side.sell.active {
+  color: var(--sell);
+  border-color: var(--sell);
+  background: rgba(193, 80, 46, 0.08);
+}
+
+
+/* ============================================================
+   ORDER TYPE
+   ============================================================ */
+
+.order-type-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.order-type {
+  flex: 1;
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--ink-dim);
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.order-type:hover {
+  color: var(--ink);
+  background: var(--bg-raised);
+}
+
+.order-type.active {
+  color: var(--amber);
+  border-color: var(--amber);
+  background: rgba(232, 163, 61, 0.07);
+}
+
+
+/* ============================================================
+   ORDER FORM GRID
+   ============================================================ */
+
+.order-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.order-form-grid .order-field {
+  margin-bottom: 0;
+}
+
+.order-field-full {
+  grid-column: 1 / -1;
+}
+
+.order-field-hint {
+  margin-top: 5px;
+  color: var(--ink-dim);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.order-field-required {
+  color: var(--amber);
+}
+
+
+/* ============================================================
+   ORDER INPUT
+   ============================================================ */
+
+.order-field input,
+.order-field select {
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.order-field input:hover,
+.order-field select:hover {
+  border-color: #51462f;
+}
+
+.order-field input:focus,
+.order-field select:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 1px rgba(232, 163, 61, 0.10);
+}
+
+.order-field input[readonly] {
+  color: var(--ink-dim);
+  cursor: default;
+}
+
+.order-field input:disabled,
+.order-field select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   ORDER SUMMARY
+   ============================================================ */
+
+.order-summary {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.order-summary-title {
+  color: var(--ink-dim);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.order-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 14px;
+}
+
+.order-summary-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.order-summary-item span {
+  color: var(--ink-dim);
+  font-size: 9px;
+}
+
+.order-summary-item strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-summary-item strong.buy {
+  color: var(--buy);
+}
+
+.order-summary-item strong.sell {
+  color: var(--sell);
+}
+
+.order-summary-item strong.accent {
+  color: var(--amber);
+}
+
+
+/* ============================================================
+   ORDER WARNING
+   ============================================================ */
+
+.order-warning {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--amber);
+  background: rgba(232, 163, 61, 0.05);
+  color: var(--ink-dim);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.order-warning strong {
+  color: var(--amber);
+}
+
+
+/* ============================================================
+   REAL ACCOUNT STATUS
+   ============================================================ */
+
+.order-account-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-size: 10px;
+}
+
+.order-account-status-main {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.order-account-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--hold);
+}
+
+.order-account-dot.connected {
+  background: var(--buy);
+  box-shadow: 0 0 0 3px rgba(143, 178, 93, 0.10);
+}
+
+.order-account-dot.error {
+  background: var(--sell);
+  box-shadow: 0 0 0 3px rgba(193, 80, 46, 0.10);
+}
+
+.order-account-label {
+  overflow: hidden;
+  color: var(--ink-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-account-value {
+  flex-shrink: 0;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+
+/* ============================================================
+   ORDER CONFIRM
+   ============================================================ */
+
+.order-confirm {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.order-confirm-title {
+  margin-bottom: 12px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 13px;
+}
+
+.order-confirm-list {
+  display: grid;
+  gap: 7px;
+}
+
+.order-confirm-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+}
+
+.order-confirm-row span {
+  color: var(--ink-dim);
+}
+
+.order-confirm-row strong {
+  color: var(--ink);
+  text-align: right;
+}
+
+.order-confirm-row strong.buy {
+  color: var(--buy);
+}
+
+.order-confirm-row strong.sell {
+  color: var(--sell);
+}
+
+
+/* ============================================================
+   REAL ORDER BUTTON
+   ============================================================ */
+
+.btn-order-submit {
+  flex: 1;
+  border: 1px solid var(--amber);
+  border-radius: 3px;
+  background: var(--amber);
+  color: #1a1300;
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.btn-order-submit:hover {
+  filter: brightness(1.08);
+}
+
+.btn-order-submit.buy {
+  border-color: var(--buy);
+  background: var(--buy);
+  color: #111508;
+}
+
+.btn-order-submit.sell {
+  border-color: var(--sell);
+  background: var(--sell);
+  color: #160804;
+}
+
+.btn-order-submit:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+
+/* ============================================================
+   ORDER RESULT
+   ============================================================ */
+
+.order-result {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.order-result.loading {
+  color: var(--ink-dim);
+  background: var(--bg);
+}
+
+.order-result.success {
+  color: var(--buy);
+  border-color: rgba(143, 178, 93, 0.35);
+  background: rgba(143, 178, 93, 0.05);
+}
+
+.order-result.error {
+  color: var(--sell);
+  border-color: rgba(193, 80, 46, 0.35);
+  background: rgba(193, 80, 46, 0.05);
+}
+
+.order-result-title {
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.order-result-detail {
+  color: var(--ink-dim);
+  font-size: 10px;
+}
+
+
+/* ============================================================
+   ORDER ID / EXECUTION INFO
+   ============================================================ */
+
+.order-execution-info {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.order-execution-item {
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.order-execution-item span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink-dim);
+  font-size: 8px;
+}
+
+.order-execution-item strong {
+  display: block;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   ORDER CLOSE BUTTON
+   ============================================================ */
+
+.btn-order-cancel {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--ink-dim);
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-order-cancel:hover {
+  color: var(--ink);
+  background: var(--bg-raised);
+}
+
+
+/* ============================================================
+   ORDER MODAL MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+  .order-modal {
+    max-width: 100%;
+  }
+
+  .order-modal-header {
+    margin-bottom: 16px;
+  }
+
+  .order-modal-header-main strong {
+    font-size: 16px;
+  }
+
+  .order-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-field-full {
+    grid-column: auto;
+  }
+
+  .order-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .order-confirm-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .order-confirm-row strong {
+    text-align: left;
+  }
+
+  .order-execution-info {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+@media (max-width: 420px) {
+
+  .order-modal {
+    padding: 18px;
+  }
+
+  .order-modal-header {
+    gap: 10px;
+  }
+
+  .order-market-badge {
+    font-size: 8px;
+  }
+
+  .order-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-side-tabs {
+    gap: 5px;
+  }
+
+  .order-type-tabs {
+    gap: 4px;
+  }
+
+}
+
+
+/* ============================================================
+   REAL ORDER — ACCESSIBILITY / REDUCED MOTION
+   ============================================================ */
+
+.order-tab:focus-visible,
+.order-side:focus-visible,
+.order-type:focus-visible,
+.btn-order-submit:focus-visible,
+.btn-order-cancel:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .order-tab,
+  .order-side,
+  .order-type,
+  .btn-order-submit,
+  .btn-order-cancel {
+    transition: none;
+  }
+
+}
