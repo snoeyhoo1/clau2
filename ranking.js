@@ -5,19 +5,20 @@
  *
  * 증권사 HTS 스타일 종목 랭킹 UI
  *
- * API:
- *   /api/rankings
+ * 데이터:
+ *   /api/scan
  *
- * 지원:
- *   popular
- *   volume
- *   gainers
- *   losers
- *   volume-count
- *   ai
- *   confidence
+ * /api/scan이 제공하는:
  *
- * 기존 SIGNAL DESK 기능은 건드리지 않는다.
+ *   rankings.popular
+ *   rankings.volume
+ *   rankings.gainers
+ *   rankings.losers
+ *   rankings.volume-count
+ *   rankings.ai
+ *   rankings.confidence
+ *   rankings.aiPicks
+ *
  * ============================================================
  */
 
@@ -34,10 +35,12 @@
       'rankingList'
     );
 
+
   const aiRankingList =
     document.getElementById(
       'aiRankingList'
     );
+
 
   const rankingTabs =
     Array.from(
@@ -46,6 +49,7 @@
       )
     );
 
+
   const navButtons =
     Array.from(
       document.querySelectorAll(
@@ -53,6 +57,10 @@
       )
     );
 
+
+  /*
+   * 랭킹 UI가 없는 페이지라면 종료.
+   */
 
   if (
     !rankingList &&
@@ -69,9 +77,14 @@
   let currentRanking =
     'popular';
 
-  let loading = false;
 
-  let lastRequest = 0;
+  let loading =
+    false;
+
+
+  let lastRequest =
+    0;
+
 
   const CACHE_MS =
     30 * 1000;
@@ -89,10 +102,16 @@
     value,
     fallback = null
   ) {
-    const n =
-      Number(value);
 
-    return Number.isFinite(n)
+    const n =
+      Number(
+        value
+      );
+
+
+    return Number.isFinite(
+      n
+    )
       ? n
       : fallback;
   }
@@ -101,6 +120,7 @@
   function escapeHtml(
     value
   ) {
+
     return String(
       value ?? ''
     )
@@ -124,6 +144,7 @@
         "'",
         '&#039;'
       );
+
   }
 
 
@@ -131,8 +152,11 @@
     value,
     ticker
   ) {
+
     const n =
-      number(value);
+      number(
+        value
+      );
 
 
     if (
@@ -142,48 +166,57 @@
     }
 
 
+    const code =
+      String(
+        ticker || ''
+      )
+        .toUpperCase();
+
+
     const isKorea =
-      String(
-        ticker || ''
-      )
-        .toUpperCase()
-        .endsWith(
-          '.KS'
-        ) ||
-      String(
-        ticker || ''
-      )
-        .toUpperCase()
-        .endsWith(
-          '.KQ'
-        );
+      code.endsWith(
+        '.KS'
+      ) ||
+      code.endsWith(
+        '.KQ'
+      );
 
 
     if (
       isKorea
     ) {
-      return Math.round(n)
-        .toLocaleString(
-          'ko-KR'
-        );
+
+      return Math.round(
+        n
+      ).toLocaleString(
+        'ko-KR'
+      );
+
     }
 
 
     return n.toLocaleString(
       'en-US',
       {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits:
+          2,
+
+        maximumFractionDigits:
+          2,
       }
     );
+
   }
 
 
   function formatPercent(
     value
   ) {
+
     const n =
-      number(value);
+      number(
+        value
+      );
 
 
     if (
@@ -198,40 +231,53 @@
         ? '+'
         : ''
     ) +
-      n.toFixed(2) +
+      n.toFixed(
+        2
+      ) +
       '%';
+
   }
 
 
   function formatAmount(
     value
   ) {
+
     const n =
-      number(value);
+      number(
+        value
+      );
 
 
     if (
-      n === null
+      n === null ||
+      n === 0
     ) {
       return '—';
     }
 
 
     const abs =
-      Math.abs(n);
+      Math.abs(
+        n
+      );
 
 
     if (
       abs >=
       1_000_000_000_000
     ) {
+
       return (
         (
           n /
           1_000_000_000_000
-        ).toFixed(2) +
+        ).toFixed(
+          2
+        ) +
         '조'
       );
+
     }
 
 
@@ -239,13 +285,17 @@
       abs >=
       100_000_000
     ) {
+
       return (
         (
           n /
           100_000_000
-        ).toFixed(1) +
+        ).toFixed(
+          1
+        ) +
         '억'
       );
+
     }
 
 
@@ -253,25 +303,31 @@
       abs >=
       10_000
     ) {
+
       return (
         (
           n /
           10_000
-        ).toFixed(1) +
+        ).toFixed(
+          1
+        ) +
         '만'
       );
+
     }
 
 
     return n.toLocaleString(
       'ko-KR'
     );
+
   }
 
 
   function marketName(
     ticker
   ) {
+
     const value =
       String(
         ticker || ''
@@ -280,28 +336,37 @@
 
 
     if (
-      value.endsWith('.KS')
+      value.endsWith(
+        '.KS'
+      )
     ) {
       return 'KOSPI';
     }
 
 
     if (
-      value.endsWith('.KQ')
+      value.endsWith(
+        '.KQ'
+      )
     ) {
       return 'KOSDAQ';
     }
 
 
     return 'US';
+
   }
 
 
   function changeClass(
     value
   ) {
+
     const n =
-      number(value, 0);
+      number(
+        value,
+        0
+      );
 
 
     if (
@@ -319,12 +384,14 @@
 
 
     return 'flat';
+
   }
 
 
   function signalType(
     value
   ) {
+
     const text =
       String(
         value || ''
@@ -333,23 +400,34 @@
 
 
     if (
-      text.includes('BUY') ||
-      text.includes('LONG')
+      text.includes(
+        'BUY'
+      ) ||
+      text.includes(
+        'LONG'
+      )
     ) {
       return 'buy';
     }
 
 
     if (
-      text.includes('SELL') ||
-      text.includes('SHORT') ||
-      text.includes('EXIT')
+      text.includes(
+        'SELL'
+      ) ||
+      text.includes(
+        'SHORT'
+      ) ||
+      text.includes(
+        'EXIT'
+      )
     ) {
       return 'sell';
     }
 
 
     return 'wait';
+
   }
 
 
@@ -368,7 +446,9 @@
 
 
     const cached =
-      cache.get(key);
+      cache.get(
+        key
+      );
 
 
     if (
@@ -377,38 +457,47 @@
         cached.time <
         CACHE_MS
     ) {
+
       return cached.data;
+
     }
 
+
+    /*
+     * 중요:
+     *
+     * /api/rankings를 호출하지 않는다.
+     *
+     * Vercel Hobby Serverless Function 제한 때문에
+     * 기존 /api/scan 하나를 사용한다.
+     */
 
     const params =
       new URLSearchParams({
 
         market,
 
-        type,
-
-        limit:
-          String(
-            limit
-          ),
-
       });
 
 
     const response =
       await fetch(
-        `/api/rankings?${params.toString()}`,
+        `/api/scan?${params.toString()}`,
         {
-          method: 'GET',
+
+          method:
+            'GET',
 
           cache:
             'no-store',
 
           headers: {
+
             Accept:
               'application/json',
+
           },
+
         }
       );
 
@@ -421,14 +510,20 @@
 
 
     try {
+
       data =
         text
-          ? JSON.parse(text)
+          ? JSON.parse(
+              text
+            )
           : {};
+
     } catch {
+
       throw new Error(
-        '랭킹 API 응답을 읽을 수 없습니다.'
+        '시장 데이터 응답을 읽을 수 없습니다.'
       );
+
     }
 
 
@@ -436,26 +531,88 @@
       !response.ok ||
       data?.ok === false
     ) {
+
       throw new Error(
         data?.error ||
         data?.message ||
-        `랭킹 조회 실패 (${response.status})`
+        `시장 데이터 조회 실패 (${response.status})`
       );
+
     }
+
+
+    /*
+     * /api/scan의 랭킹 데이터.
+     */
+
+    const rows =
+      Array.isArray(
+        data?.rankings?.[type]
+      )
+        ? data.rankings[type]
+        : Array.isArray(
+            data?.ranked
+          )
+          ? data.ranked
+          : [];
+
+
+    const aiPicks =
+      Array.isArray(
+        data?.rankings?.aiPicks
+      )
+        ? data.rankings.aiPicks
+        : [];
+
+
+    const normalized = {
+
+      ok:
+        true,
+
+      rows:
+        rows.slice(
+          0,
+          limit
+        ),
+
+      aiPicks:
+        aiPicks.slice(
+          0,
+          20
+        ),
+
+      summary:
+        data?.summary ||
+        {},
+
+      breadth:
+        data?.breadth ||
+        null,
+
+      generatedAt:
+        data?.generatedAt ||
+        null,
+
+    };
 
 
     cache.set(
       key,
       {
+
         time:
           Date.now(),
 
-        data,
+        data:
+          normalized,
+
       }
     );
 
 
-    return data;
+    return normalized;
+
   }
 
 
@@ -466,6 +623,7 @@
   function normalizeRow(
     row
   ) {
+
     return {
 
       rank:
@@ -490,6 +648,7 @@
 
       price:
         number(
+          row?.currentPrice ??
           row?.price
         ),
 
@@ -537,11 +696,12 @@
         ),
 
     };
+
   }
 
 
   /* ============================================================
-   * RENDER: NORMAL RANKING
+   * RENDER NORMAL
    * ============================================================ */
 
   function renderRanking(
@@ -557,7 +717,9 @@
 
 
     if (
-      !Array.isArray(rows) ||
+      !Array.isArray(
+        rows
+      ) ||
       rows.length === 0
     ) {
 
@@ -570,6 +732,7 @@
       `;
 
       return;
+
     }
 
 
@@ -603,36 +766,42 @@
 
 
             /*
-             * 거래대금 순위에서는
-             * 거래대금이 실제 존재할 때만 표시.
+             * 거래대금.
              */
 
             if (
-              type === 'volume'
+              type ===
+              'volume'
             ) {
+
               rightValue =
                 formatAmount(
                   row.tradingValue
                 );
+
             }
 
 
             /*
-             * 거래량 순위.
+             * 거래량.
              */
 
             if (
-              type === 'volume-count'
+              type ===
+              'volume-count'
             ) {
+
               rightValue =
                 formatAmount(
                   row.volume
                 );
+
             }
 
 
             return `
-              <div
+              <button
+                type="button"
                 class="ranking-row"
                 data-ticker="${escapeHtml(
                   row.ticker
@@ -648,7 +817,7 @@
                 </span>
 
 
-                <div
+                <span
                   class="ranking-stock"
                 >
 
@@ -658,7 +827,7 @@
                     )}
                   </strong>
 
-                  <span>
+                  <small>
                     ${escapeHtml(
                       row.ticker
                     )}
@@ -666,43 +835,45 @@
                     ${escapeHtml(
                       market
                     )}
-                  </span>
+                  </small>
 
-                </div>
+                </span>
 
 
-                <div
+                <span
                   class="ranking-price"
                 >
                   ${formatPrice(
                     row.price,
                     row.ticker
                   )}
-                </div>
+                </span>
 
 
-                <div
+                <span
                   class="
                     ranking-change
                     ${change}
                   "
                 >
                   ${rightValue}
-                </div>
+                </span>
 
-              </div>
+              </button>
             `;
+
           }
         )
         .join('');
 
 
     bindRows();
+
   }
 
 
   /* ============================================================
-   * RENDER: AI
+   * RENDER AI
    * ============================================================ */
 
   function renderAiRanking(
@@ -717,7 +888,9 @@
 
 
     if (
-      !Array.isArray(rows) ||
+      !Array.isArray(
+        rows
+      ) ||
       rows.length === 0
     ) {
 
@@ -730,6 +903,7 @@
       `;
 
       return;
+
     }
 
 
@@ -759,8 +933,9 @@
 
 
             return `
-              <div
-                class="ranking-row"
+              <button
+                type="button"
+                class="ranking-row ai-row"
                 data-ticker="${escapeHtml(
                   row.ticker
                 )}"
@@ -775,7 +950,7 @@
                 </span>
 
 
-                <div
+                <span
                   class="ranking-stock"
                 >
 
@@ -785,7 +960,7 @@
                     )}
                   </strong>
 
-                  <span>
+                  <small>
                     ${escapeHtml(
                       row.ticker
                     )}
@@ -794,19 +969,21 @@
                       row.regime ||
                       'MARKET'
                     )}
-                  </span>
+                  </small>
 
-                </div>
+                </span>
 
 
-                <div
+                <span
                   class="ai-score"
                 >
-                  ${score}
-                </div>
+                  ${escapeHtml(
+                    score
+                  )}
+                </span>
 
 
-                <div
+                <span
                   class="
                     ai-signal
                     ${type}
@@ -815,16 +992,18 @@
                   ${escapeHtml(
                     row.decision
                   )}
-                </div>
+                </span>
 
-              </div>
+              </button>
             `;
+
           }
         )
         .join('');
 
 
     bindRows();
+
   }
 
 
@@ -856,14 +1035,11 @@
               }
 
 
-              /*
-               * 기존 검색 기능을 활용한다.
-               */
-
               const input =
                 document.getElementById(
                   'searchInput'
                 );
+
 
               const searchButton =
                 document.getElementById(
@@ -874,8 +1050,10 @@
               if (
                 input
               ) {
+
                 input.value =
                   ticker;
+
               }
 
 
@@ -886,22 +1064,23 @@
                 searchButton.click();
 
 
-                window.scrollTo({
-                  top: 0,
+                window.scrollTo(
+                  {
 
-                  behavior:
-                    'smooth',
-                });
+                    top:
+                      0,
+
+                    behavior:
+                      'smooth',
+
+                  }
+                );
 
 
                 return;
+
               }
 
-
-              /*
-               * 검색 UI가 없는 경우
-               * URL query만 업데이트.
-               */
 
               try {
 
@@ -932,6 +1111,7 @@
 
         }
       );
+
   }
 
 
@@ -969,9 +1149,7 @@
 
       rankingList.innerHTML = `
         <div class="ranking-loading">
-          ${type === 'ai'
-            ? 'clau2 AI가 종목을 분석하는 중...'
-            : '시장 순위를 불러오는 중...'}
+          시장 순위를 불러오는 중...
         </div>
       `;
 
@@ -984,7 +1162,7 @@
 
       aiRankingList.innerHTML = `
         <div class="ranking-loading">
-          AI PICK을 불러오는 중...
+          clau2 AI를 분석하는 중...
         </div>
       `;
 
@@ -992,10 +1170,6 @@
 
 
     try {
-
-      /*
-       * 선택한 랭킹.
-       */
 
       const data =
         await fetchRanking(
@@ -1005,11 +1179,6 @@
         );
 
 
-      /*
-       * 이미 더 최신 요청이 실행됐다면
-       * 현재 결과를 화면에 덮어쓰지 않는다.
-       */
-
       if (
         requestId !==
         lastRequest
@@ -1018,30 +1187,31 @@
       }
 
 
-      const rows =
-        Array.isArray(
-          data?.rows
-        )
-          ? data.rows
-          : [];
-
-
-      const aiPicks =
-        Array.isArray(
-          data?.aiPicks
-        )
-          ? data.aiPicks
-          : [];
-
-
       renderRanking(
-        rows,
+        data.rows,
         type
       );
 
 
       renderAiRanking(
-        aiPicks
+        data.aiPicks
+      );
+
+
+      /*
+       * 시장 breadth도
+       * ranking API 결과를 이용할 수 있도록
+       * 이벤트로 전달.
+       */
+
+      window.dispatchEvent(
+        new CustomEvent(
+          'clau2:ranking-loaded',
+          {
+            detail:
+              data,
+          }
+        )
       );
 
 
@@ -1161,7 +1331,7 @@
 
 
   /* ============================================================
-   * NAV
+   * NAVIGATION
    * ============================================================ */
 
   function setNavActive(
@@ -1262,33 +1432,45 @@
         section
       ) {
 
-        section.scrollIntoView({
-          behavior:
-            'smooth',
+        section.scrollIntoView(
+          {
 
-          block:
-            'start',
-        });
+            behavior:
+              'smooth',
+
+            block:
+              'start',
+
+          }
+        );
 
       }
 
 
       return;
+
     }
 
 
     if (
-      target === 'home'
+      target ===
+      'home'
     ) {
 
-      window.scrollTo({
-        top: 0,
+      window.scrollTo(
+        {
 
-        behavior:
-          'smooth',
-      });
+          top:
+            0,
+
+          behavior:
+            'smooth',
+
+        }
+      );
 
       return;
+
     }
 
 
@@ -1302,6 +1484,18 @@
 
       backtest:
         'signalTrackSection',
+
+      watchlist:
+        'watchlistSection',
+
+      domestic:
+        'rankingSection',
+
+      global:
+        'rankingSection',
+
+      etf:
+        'rankingSection',
 
     };
 
@@ -1326,13 +1520,17 @@
         section
       ) {
 
-        section.scrollIntoView({
-          behavior:
-            'smooth',
+        section.scrollIntoView(
+          {
 
-          block:
-            'start',
-        });
+            behavior:
+              'smooth',
+
+            block:
+              'start',
+
+          }
+        );
 
       }
 
@@ -1366,6 +1564,7 @@
   function refresh() {
 
     cache.clear();
+
 
     load(
       currentRanking
@@ -1427,7 +1626,8 @@
       'DOMContentLoaded',
       init,
       {
-        once: true,
+        once:
+          true,
       }
     );
 
