@@ -114,6 +114,12 @@ mount(
   './api/scan'
 );
 
+mount(
+  'get',
+  '/api/rankings',
+  './api/rankings'
+);
+
 /*
  * ============================================================
  * STOCK ANALYSIS
