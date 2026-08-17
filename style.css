@@ -1,43 +1,35 @@
-/* ============================================================
+/* =========================================================
    SIGNAL DESK / CLAU2
-   BROKER TERMINAL UI
-   ============================================================ */
+   CONSOLIDATED STYLE SHEET
+   기존 HTML / JS 클래스명 유지
+   ========================================================= */
 
 :root {
   --bg: #14120f;
-  --bg-deep: #0d0c0a;
-  --bg-elevated: #1c1914;
-  --bg-raised: #242016;
-  --panel: rgba(255, 255, 255, 0.025);
+  --bg-elevated: #1e1b15;
+  --bg-raised: #262117;
+  --bg-deep: #100e0b;
 
   --ink: #f2efe7;
-  --ink-soft: rgba(242, 239, 231, 0.78);
   --ink-dim: #8a8371;
-  --ink-muted: rgba(242, 239, 231, 0.38);
 
   --line: #332d20;
-  --line-soft: rgba(255, 255, 255, 0.07);
+  --line-soft: rgba(255,255,255,.07);
 
   --amber: #e8a33d;
-  --amber-bright: #ffb84d;
-  --amber-soft: rgba(232, 163, 61, 0.08);
+  --accent: #e8a33d;
 
-  --buy: #70d78a;
-  --sell: #ff7777;
-  --hold: #777267;
+  --buy: #8fb25d;
+  --sell: #c1502e;
+  --hold: #6e6a5c;
 
   --mono: 'JetBrains Mono', monospace;
   --display: 'Big Shoulders Display', 'Space Grotesk', sans-serif;
   --body-font: 'Space Grotesk', sans-serif;
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 14px;
+  --radius: 6px;
+  --radius-lg: 12px;
 }
-
-/* ============================================================
-   RESET
-   ============================================================ */
 
 * {
   box-sizing: border-box;
@@ -45,24 +37,22 @@
 
 html {
   background: var(--bg);
+  color-scheme: dark;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-
   background:
     radial-gradient(
       circle at 50% -20%,
-      rgba(232, 163, 61, 0.045),
-      transparent 42%
+      rgba(232,163,61,.035),
+      transparent 40%
     ),
     var(--bg);
-
   color: var(--ink);
   font-family: var(--mono);
-  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -76,80 +66,65 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-button,
-a {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
 a {
   color: inherit;
-}
-
-img,
-svg {
-  max-width: 100%;
 }
 
 [hidden] {
   display: none !important;
 }
 
-/* ============================================================
+
+/* =========================================================
    TAPE
-   ============================================================ */
+   ========================================================= */
 
 .tape-wrap {
   height: 34px;
+  background: #0b0a07;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+  white-space: nowrap;
 
   display: flex;
   align-items: center;
-
-  overflow: hidden;
-
-  background: var(--bg-deep);
-  border-bottom: 1px solid var(--line);
-
-  white-space: nowrap;
 }
 
 .tape-label {
   flex-shrink: 0;
 
   height: 100%;
-
   display: flex;
   align-items: center;
 
-  padding: 0 14px 0 18px;
+  padding: 0 12px 0 16px;
 
   border-right: 1px solid var(--line);
+  margin-right: 12px;
 
   color: var(--ink-dim);
-
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: .05em;
 }
 
 .tape {
   min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
 }
 
 .tape-inner {
   display: inline-block;
-
   padding-left: 100%;
 
-  animation: scroll-tape 45s linear infinite;
+  animation: scroll-tape 40s linear infinite;
 
-  font-size: 11px;
-  letter-spacing: 0.02em;
+  font-size: 12px;
+  letter-spacing: .02em;
 }
 
 .tape-item {
-  margin-right: 46px;
+  margin-right: 48px;
 }
 
 .tape-loading {
@@ -174,22 +149,19 @@ svg {
   }
 }
 
-/* ============================================================
+
+/* =========================================================
    TOPBAR
-   ============================================================ */
+   ========================================================= */
 
 .topbar {
-  min-height: 82px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  padding: 22px 32px;
+  padding: 26px 32px 20px;
 
   border-bottom: 1px solid var(--line);
-
-  background: rgba(20, 18, 15, 0.92);
 }
 
 .brand {
@@ -202,16 +174,13 @@ svg {
 .auth-mark {
   width: 10px;
   height: 10px;
-
   flex-shrink: 0;
 
   border-radius: 50%;
-
   background: var(--amber);
 
   box-shadow:
-    0 0 0 3px rgba(232, 163, 61, 0.16),
-    0 0 18px rgba(232, 163, 61, 0.15);
+    0 0 0 3px rgba(232,163,61,.18);
 
   animation: brand-pulse 2.4s ease-in-out infinite;
 }
@@ -219,15 +188,11 @@ svg {
 @keyframes brand-pulse {
   0%,
   100% {
-    box-shadow:
-      0 0 0 3px rgba(232, 163, 61, 0.16),
-      0 0 18px rgba(232, 163, 61, 0.12);
+    box-shadow: 0 0 0 3px rgba(232,163,61,.18);
   }
 
   50% {
-    box-shadow:
-      0 0 0 6px rgba(232, 163, 61, 0.05),
-      0 0 24px rgba(232, 163, 61, 0.18);
+    box-shadow: 0 0 0 6px rgba(232,163,61,.06);
   }
 }
 
@@ -235,19 +200,15 @@ svg {
   margin: 0;
 
   font-family: var(--display);
-  font-size: 21px;
-  font-weight: 800;
-
-  letter-spacing: 0.08em;
+  font-size: 20px;
+  letter-spacing: .08em;
 }
 
 .brand-text p {
-  margin: 3px 0 0;
+  margin: 2px 0 0;
 
   color: var(--ink-dim);
-
-  font-size: 10px;
-  letter-spacing: 0.04em;
+  font-size: 12px;
 }
 
 .topbar-actions {
@@ -258,102 +219,104 @@ svg {
 
 .updated {
   color: var(--ink-dim);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .btn-refresh,
 .btn-apply {
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
+
+  padding: 9px 17px;
 
   background: var(--amber);
   color: #1a1300;
 
-  padding: 9px 16px;
-
   font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 700;
 
   cursor: pointer;
-
-  transition:
-    filter 0.15s ease,
-    transform 0.15s ease;
 }
 
 .btn-refresh:hover,
 .btn-apply:hover {
-  filter: brightness(1.1);
-}
-
-.btn-refresh:active,
-.btn-apply:active {
-  transform: translateY(1px);
+  filter: brightness(1.08);
 }
 
 .btn-refresh:disabled,
 .btn-apply:disabled {
-  opacity: 0.55;
+  opacity: .55;
   cursor: wait;
 }
 
+.btn-refresh:focus-visible,
+.btn-apply:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .btn-install {
-  border: 1px solid rgba(232, 163, 61, 0.65);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--amber);
+  border-radius: 4px;
+
+  padding: 8px 15px;
 
   background: transparent;
   color: var(--amber);
 
-  padding: 8px 14px;
-
-  font-size: 11px;
+  font-family: var(--mono);
+  font-size: 12px;
   font-weight: 700;
 
   cursor: pointer;
 }
 
 .btn-install:hover {
-  background: var(--amber-soft);
+  background: rgba(232,163,61,.08);
 }
 
-/* ============================================================
-   PRIMARY NAVIGATION
-   ============================================================ */
+
+/* =========================================================
+   BROKER NAVIGATION
+   ========================================================= */
 
 .main-nav {
   position: sticky;
   top: 0;
   z-index: 50;
 
-  border-top: 1px solid rgba(255, 255, 255, 0.025);
+  border-top: 1px solid rgba(255,255,255,.025);
   border-bottom: 1px solid var(--line);
 
-  background: rgba(15, 14, 12, 0.94);
+  background: rgba(20,18,15,.96);
 
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .main-nav-inner {
+  width: 100%;
   min-height: 48px;
 
   display: flex;
   align-items: center;
+  gap: 3px;
 
-  gap: 2px;
-
-  padding: 0 24px;
+  padding: 0 18px;
 
   overflow-x: auto;
   overflow-y: hidden;
 
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
 
 .main-nav-inner::-webkit-scrollbar {
-  display: none;
+  height: 3px;
+}
+
+.main-nav-inner::-webkit-scrollbar-thumb {
+  background: var(--line);
 }
 
 .nav-btn {
@@ -361,18 +324,18 @@ svg {
 
   flex: 0 0 auto;
 
-  height: 40px;
+  height: 48px;
 
   padding: 0 13px;
 
   border: 0;
-  border-radius: 6px;
+  border-radius: 5px;
 
   background: transparent;
-  color: rgba(255, 255, 255, 0.43);
+  color: rgba(255,255,255,.46);
 
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 
   white-space: nowrap;
@@ -380,27 +343,26 @@ svg {
   cursor: pointer;
 
   transition:
-    color 0.15s ease,
-    background 0.15s ease;
+    color .15s ease,
+    background .15s ease;
 }
 
 .nav-btn:hover {
-  background: rgba(255, 255, 255, 0.035);
   color: var(--ink);
+  background: rgba(232,163,61,.045);
 }
 
 .nav-btn.active {
-  background: rgba(232, 163, 61, 0.08);
   color: var(--amber);
+  background: rgba(232,163,61,.07);
 }
 
 .nav-btn.active::after {
   content: '';
 
   position: absolute;
-
-  left: 12px;
-  right: 12px;
+  left: 10px;
+  right: 10px;
   bottom: 0;
 
   height: 2px;
@@ -409,7 +371,11 @@ svg {
 }
 
 .nav-btn.nav-ranking {
-  color: rgba(255, 255, 255, 0.52);
+  color: #b9b29f;
+}
+
+.nav-btn.nav-ranking:hover {
+  color: var(--amber);
 }
 
 .nav-btn.nav-ai {
@@ -425,16 +391,17 @@ svg {
 
   margin: 0 5px;
 
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--line);
 }
 
-/* ============================================================
-   QUICK MARKET MENU
-   ============================================================ */
+
+/* =========================================================
+   QUICK MENU
+   ========================================================= */
 
 .quick-menu {
   border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.012);
+  background: #100e0b;
 }
 
 .quick-menu-inner {
@@ -442,10 +409,9 @@ svg {
   align-items: center;
   gap: 6px;
 
-  padding: 9px 24px;
+  padding: 9px 18px;
 
   overflow-x: auto;
-
   scrollbar-width: none;
 }
 
@@ -457,15 +423,15 @@ svg {
   flex: 0 0 auto;
 
   margin-right: 7px;
-  padding-right: 12px;
+  padding-right: 11px;
 
   border-right: 1px solid var(--line);
 
-  color: var(--ink-muted);
+  color: var(--ink-dim);
 
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: .1em;
 }
 
 .quick-btn {
@@ -477,43 +443,45 @@ svg {
 
   padding: 7px 10px;
 
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
 
-  background: rgba(255, 255, 255, 0.022);
-  color: rgba(255, 255, 255, 0.5);
+  background: var(--bg-elevated);
+  color: var(--ink-dim);
 
+  font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
 
   cursor: pointer;
 
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
+    border-color .15s ease,
+    color .15s ease,
+    background .15s ease;
 }
 
 .quick-btn span {
   color: var(--amber);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .quick-btn:hover,
 .quick-btn.active {
-  border-color: rgba(232, 163, 61, 0.25);
-  background: rgba(232, 163, 61, 0.07);
-  color: var(--ink);
-}
-
-.quick-btn-ai {
-  border-color: rgba(232, 163, 61, 0.28);
+  border-color: rgba(232,163,61,.45);
+  background: rgba(232,163,61,.07);
   color: var(--amber);
 }
 
-/* ============================================================
+.quick-btn-ai {
+  border-color: rgba(232,163,61,.35);
+  color: var(--amber);
+}
+
+
+/* =========================================================
    SEARCH
-   ============================================================ */
+   ========================================================= */
 
 .search-section {
   padding-top: 20px;
@@ -522,8 +490,8 @@ svg {
 .search-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
 
   margin: 0 32px;
 }
@@ -535,39 +503,32 @@ svg {
   padding: 11px 14px;
 
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
 
   background: var(--bg-elevated);
   color: var(--ink);
 
-  font-size: 13px;
-
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+  font-family: var(--mono);
+  font-size: 14px;
 }
 
 .search-bar input::placeholder {
-  color: var(--ink-muted);
+  color: var(--ink-dim);
 }
 
 .search-bar input:focus {
   outline: none;
-
   border-color: var(--amber);
-
-  box-shadow:
-    0 0 0 1px rgba(232, 163, 61, 0.1),
-    0 0 18px rgba(232, 163, 61, 0.035);
+  box-shadow: 0 0 0 1px rgba(232,163,61,.12);
 }
 
 .search-hint {
   width: 100%;
 
-  margin-top: 3px;
+  margin: 5px 0 0;
 
   color: var(--ink-dim);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .search-hint code {
@@ -588,8 +549,7 @@ svg {
   background: var(--bg-elevated);
 
   color: var(--ink-dim);
-
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .search-error {
@@ -609,13 +569,14 @@ svg {
   width: 100%;
 
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0,1fr) auto auto;
   align-items: center;
   gap: 16px;
 
   padding: 14px 16px;
 
   border: 0;
+  border-bottom: 1px solid var(--line);
 
   background: var(--bg-elevated);
   color: var(--ink);
@@ -625,8 +586,17 @@ svg {
   cursor: pointer;
 }
 
+.search-result-item:last-child {
+  border-bottom: 0;
+}
+
 .search-result-item:hover {
   background: var(--bg-raised);
+}
+
+.search-result-item:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: -2px;
 }
 
 .search-result-main {
@@ -646,26 +616,221 @@ svg {
 .search-result-main small,
 .search-result-exchange {
   color: var(--ink-dim);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .search-result-action {
   color: var(--amber);
-  font-size: 9px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 700;
 }
 
-/* ============================================================
+
+/* =========================================================
+   SEARCH / DETAIL
+   ========================================================= */
+
+.search-analysis,
+.detail-panel {
+  padding: 20px;
+
+  border: 1px solid var(--line);
+
+  background: var(--bg-elevated);
+}
+
+.search-analysis {
+  margin-top: 16px;
+}
+
+.search-analysis-header,
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+
+  border-bottom: 1px solid var(--line);
+}
+
+.search-analysis-header > div,
+.detail-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-analysis-header strong,
+.detail-header-main strong {
+  font-family: var(--display);
+  font-size: 20px;
+}
+
+.search-analysis-header small,
+.detail-header-main span {
+  color: var(--ink-dim);
+  font-size: 11px;
+}
+
+.search-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 1px;
+
+  margin-top: 16px;
+
+  border: 1px solid var(--line);
+
+  background: var(--line);
+}
+
+.search-analysis-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  padding: 14px;
+
+  background: var(--bg);
+}
+
+.search-analysis-grid span {
+  color: var(--ink-dim);
+  font-size: 10px;
+}
+
+.search-analysis-grid strong {
+  font-family: var(--display);
+  font-size: 18px;
+}
+
+.search-analysis-reason {
+  margin-top: 16px;
+  padding: 12px 14px;
+
+  border-left: 2px solid var(--amber);
+
+  background: rgba(232,163,61,.05);
+
+  color: var(--ink-dim);
+
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.search-analysis-actions,
+.searched-stock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin-top: 16px;
+}
+
+.detail-panel {
+  margin-top: 16px;
+}
+
+.detail-block {
+  margin-top: 20px;
+  padding-top: 16px;
+
+  border-top: 1px dashed var(--line);
+}
+
+.detail-block:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.detail-block h3 {
+  margin: 0 0 10px;
+
+  color: var(--ink-dim);
+
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: .04em;
+}
+
+
+/* =========================================================
+   CHART
+   ========================================================= */
+
+.search-chart,
+.detail-chart,
+.chart-wrap {
+  width: 100%;
+  min-height: 240px;
+
+  overflow: hidden;
+
+  border: 1px solid var(--line);
+
+  background: var(--bg-deep);
+}
+
+.search-chart svg,
+.detail-chart svg,
+.chart-wrap svg {
+  display: block;
+
+  width: 100%;
+  height: auto;
+  min-height: 240px;
+}
+
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: 6px;
+
+  color: var(--ink-dim);
+  font-size: 10px;
+}
+
+.chart-empty {
+  min-height: 240px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--ink-dim);
+  font-size: 12px;
+}
+
+.chart-error {
+  min-height: 180px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  color: var(--sell);
+  font-size: 12px;
+}
+
+
+/* =========================================================
    MARKET OVERVIEW
-   ============================================================ */
+   ========================================================= */
 
 .market-overview {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
   gap: 1px;
 
-  margin: 20px 32px 0;
+  margin: 0 32px;
 
   border: 1px solid var(--line);
 
@@ -678,12 +843,11 @@ svg {
   padding: 20px;
 
   color: var(--ink-dim);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .mo-card {
   padding: 16px;
-
   background: var(--bg-elevated);
 }
 
@@ -691,7 +855,7 @@ svg {
   margin-bottom: 6px;
 
   color: var(--ink-dim);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .mo-price {
@@ -701,36 +865,36 @@ svg {
 }
 
 .mo-change {
-  margin-top: 3px;
-
-  font-size: 11px;
+  margin-top: 2px;
+  font-size: 12px;
 }
 
-/* ============================================================
+
+/* =========================================================
    BREADTH
-   ============================================================ */
+   ========================================================= */
 
 .breadth-bar {
   display: flex;
   align-items: center;
   gap: 12px;
 
-  margin: 14px 32px 0;
-  padding: 12px 15px;
+  margin: 16px 32px 0;
+  padding: 12px 16px;
 
   border: 1px solid var(--line);
 
   background: var(--bg-elevated);
 
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .breadth-track {
   flex: 1;
 
-  display: flex;
+  height: 8px;
 
-  height: 7px;
+  display: flex;
 
   overflow: hidden;
 
@@ -754,26 +918,26 @@ svg {
   background: var(--sell);
 }
 
-/* ============================================================
-   RANKING SECTION
-   ============================================================ */
+
+/* =========================================================
+   RANKING
+   ========================================================= */
 
 .ranking-section {
   margin: 24px 32px 0;
   padding: 22px;
 
-  border: 1px solid rgba(232, 163, 61, 0.14);
-  border-radius: var(--radius-lg);
+  border: 1px solid rgba(232,163,61,.16);
+  border-radius: 12px;
 
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.026),
-      rgba(255, 255, 255, 0.008)
+      rgba(255,255,255,.025),
+      rgba(255,255,255,.012)
     );
 
-  box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 18px 50px rgba(0,0,0,.18);
 }
 
 .ranking-header {
@@ -782,11 +946,7 @@ svg {
   justify-content: space-between;
   gap: 20px;
 
-  margin-bottom: 16px;
-}
-
-.ranking-title-area {
-  min-width: 0;
+  margin-bottom: 18px;
 }
 
 .section-kicker {
@@ -795,150 +955,61 @@ svg {
   color: var(--amber);
 
   font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  margin: 0;
-
-  font-family: var(--display);
-  font-size: 17px;
-  font-weight: 800;
-
-  letter-spacing: 0.04em;
-}
-
-.section-subtitle {
-  margin: 5px 0 0;
-
-  color: var(--ink-muted);
-
-  font-size: 10px;
-}
-
-/* ============================================================
-   MARKET SWITCH
-   ============================================================ */
-
-.ranking-market-switch {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-
-  padding: 4px;
-
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.market-switch {
-  min-width: 48px;
-
-  padding: 7px 11px;
-
-  border: 0;
-  border-radius: 6px;
-
-  background: transparent;
-  color: rgba(255, 255, 255, 0.42);
-
-  font-size: 10px;
   font-weight: 700;
-
-  cursor: pointer;
+  letter-spacing: .12em;
 }
 
-.market-switch:hover {
-  color: var(--ink);
+.ranking-section .section-title {
+  margin-bottom: 3px;
 }
-
-.market-switch.active {
-  background: rgba(232, 163, 61, 0.12);
-  color: var(--amber);
-}
-
-/* ============================================================
-   RANKING TABS
-   ============================================================ */
 
 .ranking-tabs {
   display: flex;
   align-items: center;
-  gap: 3px;
-
-  width: fit-content;
-  max-width: 100%;
-
-  margin-bottom: 14px;
+  gap: 4px;
 
   padding: 4px;
 
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: 9px;
 
-  background: rgba(0, 0, 0, 0.18);
-
-  overflow-x: auto;
+  background: rgba(0,0,0,.20);
 }
 
 .ranking-tab {
-  flex: 0 0 auto;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-
-  padding: 8px 12px;
+  appearance: none;
 
   border: 0;
   border-radius: 6px;
 
-  background: transparent;
-  color: rgba(255, 255, 255, 0.43);
+  padding: 9px 14px;
 
+  background: transparent;
+  color: rgba(255,255,255,.48);
+
+  font-family: inherit;
   font-size: 10px;
   font-weight: 700;
 
-  white-space: nowrap;
-
   cursor: pointer;
-
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
 }
 
 .ranking-tab:hover {
-  background: rgba(255, 255, 255, 0.035);
-  color: var(--ink);
+  color: rgba(255,255,255,.86);
+  background: rgba(255,255,255,.035);
 }
 
 .ranking-tab.active {
-  background: rgba(232, 163, 61, 0.12);
+  background: rgba(232,163,61,.13);
   color: var(--amber);
 }
 
-.ranking-tab-ai {
-  color: var(--amber);
-}
-
-/* ============================================================
-   RANKING DASHBOARD
-   ============================================================ */
-
-.ranking-dashboard {
+.ranking-grid {
   display: grid;
 
   grid-template-columns:
-    minmax(0, 1.15fr)
-    minmax(0, 0.85fr);
+    minmax(0,1.2fr)
+    minmax(0,1fr);
 
   gap: 14px;
 }
@@ -948,111 +1019,53 @@ svg {
 
   overflow: hidden;
 
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 11px;
 
-  background: rgba(0, 0, 0, 0.16);
+  background: rgba(0,0,0,.16);
 }
 
 .ranking-panel-header {
-  min-height: 52px;
+  min-height: 44px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  padding: 8px 14px;
+  padding: 0 14px;
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
+  border-bottom: 1px solid rgba(255,255,255,.07);
 
-.ranking-panel-heading {
-  min-width: 0;
+  color: rgba(255,255,255,.72);
 
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.ranking-panel-title {
-  color: rgba(255, 255, 255, 0.78);
-
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
-.ranking-panel-description {
-  color: var(--ink-muted);
-
-  font-size: 8px;
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: .05em;
 }
 
 .ranking-live {
-  flex-shrink: 0;
+  color: #7fd68b;
 
-  color: var(--buy);
-
+  font-family: var(--mono);
   font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-weight: 700;
 }
 
 .ai-badge {
-  flex-shrink: 0;
+  padding: 3px 6px;
 
-  padding: 4px 7px;
-
-  border: 1px solid rgba(232, 163, 61, 0.35);
-  border-radius: 5px;
+  border: 1px solid rgba(232,163,61,.35);
+  border-radius: 4px;
 
   color: var(--amber);
 
+  font-family: var(--mono);
   font-size: 9px;
-  font-weight: 800;
 }
-
-/* ============================================================
-   RANKING TABLE HEADER
-   ============================================================ */
-
-.ranking-table-head {
-  display: grid;
-
-  grid-template-columns:
-    42px
-    minmax(0, 1fr)
-    100px
-    80px;
-
-  gap: 10px;
-
-  min-height: 32px;
-
-  align-items: center;
-
-  padding: 0 14px;
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
-
-  color: var(--ink-muted);
-
-  font-size: 8px;
-  font-weight: 700;
-
-  letter-spacing: 0.05em;
-}
-
-.ranking-table-head span:nth-child(3),
-.ranking-table-head span:nth-child(4) {
-  text-align: right;
-}
-
-/* ============================================================
-   RANKING LIST
-   ============================================================ */
 
 .ranking-list {
+  min-height: 240px;
+
   display: flex;
   flex-direction: column;
 }
@@ -1063,32 +1076,32 @@ svg {
   display: grid;
 
   grid-template-columns:
-    42px
-    minmax(0, 1fr)
+    34px
+    minmax(0,1fr)
     100px
-    80px;
+    82px;
 
   align-items: center;
-
   gap: 10px;
 
-  min-height: 57px;
+  min-height: 58px;
 
-  padding: 7px 14px;
+  padding: 8px 13px;
 
   border: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+  border-bottom: 1px solid rgba(255,255,255,.045);
 
   background: transparent;
   color: inherit;
 
   text-align: left;
+  font-family: inherit;
 
   cursor: pointer;
 
   transition:
-    background 0.14s ease,
-    transform 0.14s ease;
+    background .14s ease,
+    transform .14s ease;
 }
 
 .ranking-row:last-child {
@@ -1096,17 +1109,18 @@ svg {
 }
 
 .ranking-row:hover {
-  background: rgba(232, 163, 61, 0.055);
+  background: rgba(232,163,61,.055);
 }
 
-.ranking-row:active {
-  background: rgba(232, 163, 61, 0.09);
+.ranking-row:hover .ranking-stock strong {
+  color: var(--amber);
 }
 
 .ranking-rank {
-  color: var(--ink-muted);
+  color: rgba(255,255,255,.36);
 
-  font-size: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
 
   text-align: center;
 }
@@ -1116,14 +1130,13 @@ svg {
 
   display: flex;
   flex-direction: column;
-
-  gap: 3px;
+  gap: 4px;
 }
 
 .ranking-stock strong {
   overflow: hidden;
 
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255,255,255,.92);
 
   font-size: 12px;
   font-weight: 700;
@@ -1131,96 +1144,74 @@ svg {
 
   text-overflow: ellipsis;
   white-space: nowrap;
-
-  transition: color 0.12s ease;
 }
 
-.ranking-row:hover .ranking-stock strong {
-  color: var(--amber);
-}
-
-.ranking-stock span,
-.ranking-stock small {
+.ranking-stock small,
+.ranking-stock span {
   overflow: hidden;
 
-  color: var(--ink-muted);
+  color: rgba(255,255,255,.34);
 
-  font-size: 8px;
+  font-family: var(--mono);
+  font-size: 9px;
 
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .ranking-price {
-  color: var(--ink-soft);
+  color: rgba(255,255,255,.72);
 
-  font-size: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
 
   text-align: right;
-
   white-space: nowrap;
 }
 
 .ranking-change {
-  font-size: 10px;
-  font-weight: 800;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
 
   text-align: right;
-
   white-space: nowrap;
 }
 
 .ranking-change.up {
-  color: var(--buy);
+  color: #70d78a;
 }
 
 .ranking-change.down {
-  color: var(--sell);
+  color: #ff7777;
 }
 
 .ranking-change.flat {
   color: var(--hold);
 }
 
-/* ============================================================
-   RANKING MORE
-   ============================================================ */
-
-.ranking-more {
-  width: 100%;
+.ranking-loading,
+.ranking-empty {
+  min-height: 240px;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
 
-  min-height: 42px;
+  padding: 20px;
 
-  border: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.055);
+  color: rgba(255,255,255,.32);
 
-  background: rgba(255, 255, 255, 0.012);
-  color: var(--ink-dim);
+  font-size: 11px;
+  line-height: 1.7;
 
-  font-size: 9px;
-  font-weight: 700;
-
-  cursor: pointer;
+  text-align: center;
 }
 
-.ranking-more span {
-  color: var(--amber);
-  font-size: 12px;
-}
 
-.ranking-more:hover {
-  background: rgba(232, 163, 61, 0.045);
-  color: var(--ink);
-}
-
-/* ============================================================
+/* =========================================================
    AI RANKING
-   ============================================================ */
+   ========================================================= */
 
 .ai-ranking-panel {
   position: relative;
@@ -1241,47 +1232,17 @@ svg {
     linear-gradient(
       90deg,
       transparent,
-      rgba(232, 163, 61, 0.75),
+      rgba(232,163,61,.7),
       transparent
     );
 }
 
-.ai-ranking-head {
-  display: grid;
-
+.ai-row,
+.ai-ranking-panel .ranking-row {
   grid-template-columns:
-    minmax(0, 1fr)
-    52px
-    76px;
-
-  align-items: center;
-
-  gap: 10px;
-
-  min-height: 32px;
-
-  padding: 0 14px;
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
-
-  color: var(--ink-muted);
-
-  font-size: 8px;
-  font-weight: 700;
-
-  letter-spacing: 0.05em;
-}
-
-.ai-ranking-head span:nth-child(2),
-.ai-ranking-head span:nth-child(3) {
-  text-align: right;
-}
-
-.ai-row {
-  grid-template-columns:
-    42px
-    minmax(0, 1fr)
-    52px
+    34px
+    minmax(0,1fr)
+    48px
     76px;
 }
 
@@ -1289,7 +1250,7 @@ svg {
   color: var(--amber);
 
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
 
   text-align: right;
@@ -1300,68 +1261,44 @@ svg {
 
   min-width: 58px;
 
-  padding: 5px 6px;
+  padding: 5px 7px;
 
   border-radius: 5px;
 
-  font-size: 8px;
+  font-family: var(--mono);
+  font-size: 9px;
   font-weight: 800;
 
   text-align: center;
-  letter-spacing: 0.03em;
+  letter-spacing: .03em;
 }
 
 .ai-signal.buy {
-  border: 1px solid rgba(112, 215, 138, 0.25);
-  background: rgba(112, 215, 138, 0.09);
-
-  color: var(--buy);
+  border: 1px solid rgba(112,215,138,.25);
+  background: rgba(112,215,138,.09);
+  color: #70d78a;
 }
 
 .ai-signal.sell {
-  border: 1px solid rgba(255, 119, 119, 0.25);
-  background: rgba(255, 119, 119, 0.09);
-
-  color: var(--sell);
+  border: 1px solid rgba(255,119,119,.25);
+  background: rgba(255,119,119,.09);
+  color: #ff7777;
 }
 
 .ai-signal.wait {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.035);
-
-  color: rgba(255, 255, 255, 0.48);
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.035);
+  color: rgba(255,255,255,.48);
 }
 
-.ranking-loading,
-.ranking-empty {
-  min-height: 220px;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px;
-
-  color: var(--ink-muted);
-
-  font-size: 10px;
-
-  text-align: center;
-}
-
-.ranking-loading {
-  line-height: 1.7;
-}
-
-/* ============================================================
-   SCAN / SIGNAL BOARDS
-   ============================================================ */
+/* =========================================================
+   SCAN
+   ========================================================= */
 
 .scan-section {
   display: grid;
-
   grid-template-columns: 1fr 1fr;
-
   gap: 24px;
 
   margin: 24px 32px;
@@ -1375,8 +1312,8 @@ svg {
   margin: 0 0 10px;
 
   font-family: var(--display);
-  font-size: 13px;
-  letter-spacing: 0.05em;
+  font-size: 14px;
+  letter-spacing: .05em;
 }
 
 .buy-heading {
@@ -1389,10 +1326,7 @@ svg {
 
 .board {
   display: grid;
-
-  grid-template-columns:
-    repeat(auto-fill, minmax(280px, 1fr));
-
+  grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
   gap: 1px;
 
   padding: 1px;
@@ -1402,26 +1336,27 @@ svg {
   background: var(--line);
 }
 
-/* ============================================================
-   SIGNAL CARD
-   ============================================================ */
+
+/* =========================================================
+   STOCK CARD
+   ========================================================= */
 
 .card {
   position: relative;
 
-  padding: 18px;
+  padding: 20px;
 
   border-top: 2px solid var(--line);
 
   background: var(--bg-elevated);
 
-  animation: flap-in 0.35s cubic-bezier(0.2, 0.6, 0.3, 1) both;
+  animation: flap-in .35s cubic-bezier(.2,.6,.3,1) both;
 }
 
 @keyframes flap-in {
   from {
     opacity: 0;
-    transform: scaleY(0.96) translateY(-3px);
+    transform: scaleY(.94) translateY(-4px);
   }
 
   to {
@@ -1432,10 +1367,11 @@ svg {
 
 .card-head {
   display: flex;
-  align-items: baseline;
   justify-content: space-between;
-
+  align-items: baseline;
   gap: 10px;
+
+  margin-bottom: 4px;
 }
 
 .card-label {
@@ -1446,57 +1382,57 @@ svg {
 
 .card-ticker {
   color: var(--ink-dim);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .card-price {
   margin: 8px 0 2px;
 
-  font-size: 21px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 700;
 }
 
 .card-change {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .signal-badge {
   display: inline-block;
 
-  margin-top: 13px;
+  margin-top: 14px;
+  padding: 6px 12px;
 
-  padding: 6px 10px;
+  border-radius: 3px;
 
-  border-radius: 4px;
-
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .03em;
 }
 
 .signal-buy {
-  border: 1px solid rgba(112, 215, 138, 0.5);
-  background: rgba(112, 215, 138, 0.1);
+  border: 1px solid var(--buy);
+  background: rgba(75,201,138,.12);
   color: var(--buy);
 }
 
 .signal-sell {
-  border: 1px solid rgba(255, 119, 119, 0.5);
-  background: rgba(255, 119, 119, 0.1);
+  border: 1px solid var(--sell);
+  background: rgba(227,92,92,.12);
   color: var(--sell);
 }
 
 .signal-hold {
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--hold);
+  background: rgba(125,138,156,.12);
   color: var(--hold);
 }
 
 .score-bar-wrap {
   position: relative;
 
-  height: 5px;
+  height: 6px;
 
-  margin-top: 13px;
+  margin-top: 14px;
 
   overflow: hidden;
 
@@ -1507,24 +1443,49 @@ svg {
 
 .score-bar {
   position: absolute;
-
   top: 0;
   bottom: 0;
-
   left: 50%;
 }
 
-/* ============================================================
-   AI PANEL
-   ============================================================ */
+.breakdown {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+
+  margin-top: 16px;
+  padding-top: 12px;
+
+  border-top: 1px dashed var(--line);
+
+  color: var(--ink-dim);
+
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.breakdown > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.breakdown b {
+  color: var(--ink);
+}
+
+
+/* =========================================================
+   AI / EXECUTION / PROBABILITY
+   ========================================================= */
 
 .ai-panel {
-  margin-top: 13px;
-  padding: 11px;
+  margin-top: 14px;
+  padding: 12px;
 
   border: 1px solid var(--line);
 
-  background: rgba(232, 163, 61, 0.035);
+  background: rgba(232,163,61,.035);
 }
 
 .ai-panel-title,
@@ -1532,52 +1493,50 @@ svg {
 .up-prob-title {
   color: var(--ink-dim);
 
-  font-size: 9px;
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  letter-spacing: .04em;
 }
 
 .ai-main-row {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-main-row .signal-badge {
+  margin-top: 8px;
 }
 
 .ai-score,
 .ai-confidence {
   color: var(--amber);
-
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .ai-meta {
   display: flex;
-  gap: 9px;
   flex-wrap: wrap;
+  gap: 10px;
 
-  margin-top: 8px;
-
-  color: var(--ink-dim);
-
-  font-size: 9px;
-}
-
-.ai-reason {
   margin-top: 9px;
 
   color: var(--ink-dim);
-
   font-size: 10px;
+}
+
+.ai-reason {
+  margin-top: 10px;
+
+  color: var(--ink-dim);
+
+  font-size: 11px;
   line-height: 1.6;
 }
 
-/* ============================================================
-   EXECUTION
-   ============================================================ */
-
 .execution-panel {
-  margin-top: 11px;
-  padding: 11px;
+  margin-top: 12px;
+  padding: 12px;
 
   border: 1px solid var(--line);
 
@@ -1586,13 +1545,14 @@ svg {
 
 .execution-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
-
-  gap: 7px;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 8px;
 
   margin-top: 8px;
+}
+
+.execution-grid > div {
+  min-width: 0;
 }
 
 .execution-grid span {
@@ -1602,7 +1562,7 @@ svg {
 
   color: var(--ink-dim);
 
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .execution-grid b {
@@ -1610,27 +1570,75 @@ svg {
 
   overflow: hidden;
 
-  font-size: 10px;
+  font-size: 11px;
 
   text-overflow: ellipsis;
 }
 
-/* ============================================================
-   NEWS
-   ============================================================ */
+.up-prob {
+  margin-top: 12px;
+  padding: 10px;
+
+  border: 1px solid var(--line);
+  border-radius: 3px;
+
+  background: rgba(232,163,61,.06);
+
+  font-size: 11px;
+}
+
+.up-prob-title {
+  margin-bottom: 6px;
+}
+
+.prob-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  padding: 3px 0;
+}
+
+.prob-horizon {
+  min-width: 56px;
+  color: var(--ink-dim);
+}
+
+.prob-value {
+  color: var(--amber);
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.prob-return {
+  font-size: 11px;
+}
+
+.prob-conf,
+.prob-note {
+  color: var(--ink-dim);
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   HEADLINES
+   ========================================================= */
 
 .headlines {
-  margin: 10px 0 0;
+  margin-top: 10px;
   padding: 0;
 
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .headlines li {
   position: relative;
 
   margin-bottom: 5px;
-  padding-left: 11px;
+  padding-left: 12px;
 
   list-style: none;
 
@@ -1645,71 +1653,21 @@ svg {
 }
 
 .headlines li.headline-irrelevant {
-  opacity: 0.4;
+  opacity: .4;
 }
 
 .headline-source {
-  color: var(--ink-muted);
-  font-size: 9px;
-}
-
-/* ============================================================
-   UP PROBABILITY
-   ============================================================ */
-
-.up-prob {
-  margin-top: 11px;
-  padding: 9px;
-
-  border: 1px solid var(--line);
-  border-radius: 4px;
-
-  background: rgba(232, 163, 61, 0.045);
-
-  font-size: 10px;
-}
-
-.up-prob-title {
-  margin-bottom: 5px;
-}
-
-.prob-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-
-  padding: 3px 0;
-}
-
-.prob-horizon {
-  min-width: 54px;
   color: var(--ink-dim);
-}
-
-.prob-value {
-  color: var(--amber);
-
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.prob-return {
   font-size: 10px;
-}
-
-.prob-conf,
-.prob-note {
-  color: var(--ink-dim);
-  font-size: 9px;
+  opacity: .7;
 }
 
 .card-error {
-  margin-top: 11px;
+  margin-top: 12px;
 
   color: var(--sell);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .hint {
@@ -1717,200 +1675,17 @@ svg {
 
   color: var(--ink-dim);
 
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .hint code {
   color: var(--amber);
 }
 
-/* ============================================================
-   SEARCH ANALYSIS / DETAIL
-   ============================================================ */
 
-.search-analysis,
-.detail-panel {
-  padding: 20px;
-
-  border: 1px solid var(--line);
-
-  background: var(--bg-elevated);
-}
-
-.detail-panel {
-  margin-top: 16px;
-}
-
-.search-analysis-header,
-.detail-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-
-  gap: 16px;
-
-  padding-bottom: 16px;
-
-  border-bottom: 1px solid var(--line);
-}
-
-.search-analysis-header strong,
-.detail-header-main strong {
-  font-family: var(--display);
-  font-size: 20px;
-}
-
-.search-analysis-header small,
-.detail-header-main span {
-  color: var(--ink-dim);
-  font-size: 10px;
-}
-
-.search-analysis-grid {
-  display: grid;
-
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: 1px;
-
-  margin-top: 16px;
-
-  border: 1px solid var(--line);
-
-  background: var(--line);
-}
-
-.search-analysis-grid > div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-
-  padding: 14px;
-
-  background: var(--bg);
-}
-
-.search-analysis-grid span {
-  color: var(--ink-dim);
-  font-size: 9px;
-}
-
-.search-analysis-grid strong {
-  font-family: var(--display);
-  font-size: 17px;
-}
-
-.search-analysis-reason {
-  margin-top: 15px;
-  padding: 11px 13px;
-
-  border-left: 2px solid var(--amber);
-
-  background: rgba(232, 163, 61, 0.045);
-
-  color: var(--ink-dim);
-
-  font-size: 11px;
-  line-height: 1.7;
-}
-
-.search-analysis-actions,
-.searched-stock-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  margin-top: 15px;
-}
-
-.detail-block {
-  margin-top: 20px;
-  padding-top: 16px;
-
-  border-top: 1px dashed var(--line);
-}
-
-.detail-block:first-of-type {
-  margin-top: 0;
-  padding-top: 0;
-
-  border-top: 0;
-}
-
-.detail-block h3 {
-  margin: 0 0 10px;
-
-  color: var(--ink-dim);
-
-  font-family: var(--display);
-  font-size: 12px;
-}
-
-/* ============================================================
-   CHART
-   ============================================================ */
-
-.search-chart,
-.detail-chart,
-.chart-wrap {
-  width: 100%;
-  min-height: 240px;
-
-  overflow: hidden;
-
-  border: 1px solid var(--line);
-
-  background: #100e0b;
-}
-
-.search-chart svg,
-.detail-chart svg,
-.chart-wrap svg {
-  display: block;
-
-  width: 100%;
-  height: auto;
-
-  min-height: 240px;
-}
-
-.chart-axis {
-  display: flex;
-  justify-content: space-between;
-
-  margin-top: 6px;
-
-  color: var(--ink-dim);
-
-  font-size: 9px;
-}
-
-.chart-empty,
-.chart-error {
-  min-height: 220px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px;
-
-  text-align: center;
-
-  font-size: 11px;
-}
-
-.chart-empty {
-  color: var(--ink-dim);
-}
-
-.chart-error {
-  color: var(--sell);
-}
-
-/* ============================================================
+/* =========================================================
    MARKET NEWS
-   ============================================================ */
+   ========================================================= */
 
 .market-news-section {
   margin: 24px 32px 0;
@@ -1925,7 +1700,6 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   gap: 12px;
 
   margin-bottom: 14px;
@@ -1936,8 +1710,7 @@ svg {
 
   font-family: var(--display);
   font-size: 14px;
-
-  letter-spacing: 0.05em;
+  letter-spacing: .05em;
 }
 
 .market-news-list {
@@ -1964,20 +1737,20 @@ svg {
 
   color: var(--ink-dim);
 
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .market-news-category {
   color: var(--amber);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .market-news-title {
   display: block;
 
-  color: var(--ink);
+  color: inherit;
 
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
 
   text-decoration: none;
@@ -1987,9 +1760,10 @@ svg {
   color: var(--amber);
 }
 
-/* ============================================================
+
+/* =========================================================
    BACKTEST
-   ============================================================ */
+   ========================================================= */
 
 .backtest-panel {
   margin: 32px;
@@ -2005,27 +1779,29 @@ svg {
 
   font-family: var(--display);
   font-size: 14px;
+  letter-spacing: .05em;
 }
 
 .backtest-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
+  gap: 10px;
 
   margin-top: 12px;
 }
 
 .backtest-controls input,
 .backtest-controls select {
-  padding: 9px 11px;
+  padding: 9px 12px;
 
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 3px;
 
   background: var(--bg);
   color: var(--ink);
 
-  font-size: 11px;
+  font-family: var(--mono);
+  font-size: 13px;
 }
 
 .backtest-controls input {
@@ -2034,29 +1810,26 @@ svg {
 }
 
 .bt-result {
-  margin-top: 18px;
-}
-
-.bt-loading,
-.bt-error {
-  padding: 16px 0;
-
-  font-size: 11px;
+  margin-top: 20px;
 }
 
 .bt-loading {
+  padding: 16px 0;
+
   color: var(--ink-dim);
+  font-size: 12px;
 }
 
 .bt-error {
+  padding: 16px 0;
+
   color: var(--sell);
+  font-size: 12px;
 }
 
 .bt-metrics {
   display: grid;
-
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
   gap: 1px;
 
   border: 1px solid var(--line);
@@ -2074,46 +1847,47 @@ svg {
   margin-bottom: 4px;
 
   color: var(--ink-dim);
-
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .bt-metric-value {
   font-family: var(--display);
-
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .bt-limitation {
-  margin-top: 13px;
+  margin-top: 14px;
   padding-left: 10px;
 
   border-left: 2px solid var(--amber);
 
   color: var(--amber);
 
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .bt-curve {
-  margin-top: 15px;
+  margin-top: 16px;
 
   overflow: hidden;
 
   border: 1px solid var(--line);
 
-  background: #100e0b;
+  background: var(--bg-deep);
 }
 
 .bt-curve svg {
   display: block;
+
   width: 100%;
+  height: auto;
 }
 
-/* ============================================================
+
+/* =========================================================
    ACCOUNT
-   ============================================================ */
+   ========================================================= */
 
 .account-section {
   margin: 24px 32px 0;
@@ -2124,17 +1898,57 @@ svg {
   background: var(--bg-elevated);
 }
 
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 0 0 14px;
+
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: .05em;
+}
+
+.env-badge {
+  padding: 3px 8px;
+
+  border-radius: 3px;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.env-mock {
+  background: rgba(125,138,156,.2);
+  color: var(--ink-dim);
+}
+
+.env-real {
+  border: 1px solid var(--sell);
+
+  background: rgba(227,92,92,.15);
+  color: var(--sell);
+}
+
+.account-notice {
+  padding: 8px 0;
+
+  color: var(--ink-dim);
+
+  font-size: 12px;
+}
+
 .account-summary {
   display: grid;
-
-  grid-template-columns:
-    repeat(auto-fit, minmax(140px, 1fr));
-
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
   gap: 12px;
 
   padding-bottom: 14px;
 
   border-bottom: 1px dashed var(--line);
+
+  font-size: 13px;
 }
 
 .account-summary > div {
@@ -2145,15 +1959,7 @@ svg {
 
 .account-label {
   color: var(--ink-dim);
-  font-size: 9px;
-}
-
-.account-notice {
-  padding: 8px 0;
-
-  color: var(--ink-dim);
-
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .holdings-list {
@@ -2162,21 +1968,15 @@ svg {
 
 .holding-row {
   display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    auto
-    auto;
-
+  grid-template-columns: minmax(0,1fr) auto auto;
   align-items: center;
-
   gap: 18px;
 
   padding: 10px 0;
 
   border-bottom: 1px dashed var(--line);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .holding-row:last-child {
@@ -2191,11 +1991,11 @@ svg {
 
 .holding-row > div:first-child span {
   color: var(--ink-dim);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .holding-name {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .holding-meta {
@@ -2203,12 +2003,13 @@ svg {
 
   color: var(--ink-dim);
 
-  font-size: 9px;
+  font-size: 11px;
 }
 
-/* ============================================================
+
+/* =========================================================
    TRADE
-   ============================================================ */
+   ========================================================= */
 
 .trade-buttons {
   display: flex;
@@ -2220,14 +2021,14 @@ svg {
 .btn-trade {
   flex: 1;
 
-  padding: 11px;
+  padding: 12px;
 
   border: 1px solid;
+  border-radius: 3px;
 
-  border-radius: 4px;
-
-  font-size: 11px;
-  font-weight: 800;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
 
   cursor: pointer;
 }
@@ -2235,28 +2036,29 @@ svg {
 .btn-buy {
   border-color: var(--buy);
 
-  background: rgba(112, 215, 138, 0.1);
+  background: rgba(75,201,138,.12);
   color: var(--buy);
 }
 
 .btn-buy:hover {
-  background: rgba(112, 215, 138, 0.18);
+  background: rgba(75,201,138,.22);
 }
 
 .btn-sell {
   border-color: var(--sell);
 
-  background: rgba(255, 119, 119, 0.1);
+  background: rgba(227,92,92,.12);
   color: var(--sell);
 }
 
 .btn-sell:hover {
-  background: rgba(255, 119, 119, 0.18);
+  background: rgba(227,92,92,.22);
 }
 
-/* ============================================================
+
+/* =========================================================
    MODAL
-   ============================================================ */
+   ========================================================= */
 
 .modal-overlay {
   position: fixed;
@@ -2267,7 +2069,7 @@ svg {
   align-items: flex-end;
   justify-content: center;
 
-  background: rgba(0, 0, 0, 0.68);
+  background: rgba(0,0,0,.6);
 }
 
 .modal {
@@ -2299,8 +2101,7 @@ svg {
   margin-bottom: 6px;
 
   color: var(--ink-dim);
-
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .order-field input,
@@ -2310,15 +2111,17 @@ svg {
   padding: 10px;
 
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 3px;
 
   background: var(--bg);
   color: var(--ink);
 
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: 14px;
 }
 
-.order-field input:focus {
+.order-field input:focus,
+.order-field select:focus {
   outline: none;
   border-color: var(--amber);
 }
@@ -2331,7 +2134,7 @@ svg {
 
   color: var(--amber);
 
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .modal-actions {
@@ -2343,6 +2146,7 @@ svg {
 
 .modal-actions button {
   flex: 1;
+
   padding: 12px;
 }
 
@@ -2351,13 +2155,15 @@ svg {
 
   color: var(--buy);
 
-  font-size: 11px;
+  font-size: 13px;
+
   text-align: center;
 }
 
-/* ============================================================
-   AUTH
-   ============================================================ */
+
+/* =========================================================
+   AUTH GATE
+   ========================================================= */
 
 .auth-gate {
   position: fixed;
@@ -2383,7 +2189,7 @@ svg {
     repeating-linear-gradient(
       transparent,
       transparent 2px,
-      rgba(232, 163, 61, 0.018) 3px
+      rgba(232,163,61,.02) 3px
     );
 
   pointer-events: none;
@@ -2398,6 +2204,8 @@ svg {
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  gap: 4px;
 
   padding: 32px 28px;
 
@@ -2417,8 +2225,7 @@ svg {
 
   font-family: var(--display);
   font-size: 22px;
-
-  letter-spacing: 0.1em;
+  letter-spacing: .1em;
 }
 
 .auth-subtitle {
@@ -2426,7 +2233,7 @@ svg {
 
   color: var(--ink-dim);
 
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .auth-input {
@@ -2435,17 +2242,19 @@ svg {
   padding: 12px 14px;
 
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 3px;
 
   background: var(--bg);
   color: var(--ink);
 
-  font-size: 14px;
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: .08em;
 
   text-align: center;
 }
 
-.auth-input:focus {
+.auth-input:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
@@ -2457,19 +2266,26 @@ svg {
   padding: 12px 18px;
 
   border: 0;
-  border-radius: 4px;
+  border-radius: 3px;
 
   background: var(--amber);
   color: #1a1300;
 
-  font-size: 12px;
-  font-weight: 800;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .06em;
 
   cursor: pointer;
 }
 
 .auth-submit:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
+}
+
+.auth-submit:disabled {
+  opacity: .6;
+  cursor: default;
 }
 
 .auth-error {
@@ -2477,12 +2293,13 @@ svg {
 
   color: var(--sell);
 
-  font-size: 10px;
+  font-size: 12px;
 }
 
-/* ============================================================
+
+/* =========================================================
    FOOTER
-   ============================================================ */
+   ========================================================= */
 
 .disclaimer {
   padding: 24px;
@@ -2491,34 +2308,61 @@ svg {
 
   color: var(--ink-dim);
 
-  font-size: 9px;
+  font-size: 11px;
 
   text-align: center;
 }
 
-/* ============================================================
-   RESPONSIVE — TABLET
-   ============================================================ */
 
-@media (max-width: 1000px) {
-  .ranking-dashboard {
-    grid-template-columns: 1fr;
-  }
+/* =========================================================
+   GENERAL FOCUS
+   ========================================================= */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   MOBILE / TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
 
   .scan-section {
     grid-template-columns: 1fr;
   }
+
+  .ranking-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .execution-grid {
+    grid-template-columns: repeat(3,1fr);
+  }
+
+  .main-nav-inner,
+  .quick-menu-inner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .ranking-section {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
 }
 
-/* ============================================================
-   RESPONSIVE — MOBILE
-   ============================================================ */
 
 @media (max-width: 700px) {
-  .topbar {
-    padding: 18px 16px;
 
-    gap: 14px;
+  .topbar {
+    padding: 20px 16px 16px;
+
+    gap: 16px;
 
     flex-wrap: wrap;
   }
@@ -2527,26 +2371,32 @@ svg {
     width: 100%;
 
     justify-content: flex-end;
+
+    flex-wrap: wrap;
   }
 
-  .updated {
-    display: none;
+  .search-bar {
+    margin-left: 16px;
+    margin-right: 16px;
   }
 
-  .main-nav-inner {
-    padding: 0 12px;
+  .market-overview {
+    margin-left: 16px;
+    margin-right: 16px;
   }
 
-  .quick-menu-inner {
-    padding: 9px 12px;
+  .breadth-bar {
+    margin-left: 16px;
+    margin-right: 16px;
+
+    flex-wrap: wrap;
   }
 
-  .search-bar,
-  .market-overview,
-  .breadth-bar,
-  .search-result,
-  .scan-section,
-  .ranking-section,
+  .scan-section {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
   .account-section,
   .market-news-section,
   .backtest-panel {
@@ -2554,92 +2404,33 @@ svg {
     margin-right: 16px;
   }
 
-  .ranking-section {
-    padding: 14px;
-    border-radius: 11px;
+  .search-result {
+    margin-left: 16px;
+    margin-right: 16px;
   }
 
-  .ranking-header {
-    align-items: flex-start;
-    flex-direction: column;
+  .search-result-item {
+    grid-template-columns: minmax(0,1fr) auto;
   }
 
-  .ranking-market-switch {
-    width: 100%;
-  }
-
-  .market-switch {
-    flex: 1;
-  }
-
-  .ranking-tabs {
-    width: 100%;
-  }
-
-  .ranking-tab {
-    flex: 0 0 auto;
-  }
-
-  .ranking-table-head {
-    grid-template-columns:
-      30px
-      minmax(0, 1fr)
-      78px
-      62px;
-
-    gap: 7px;
-
-    padding: 0 9px;
-  }
-
-  .ranking-row {
-    grid-template-columns:
-      30px
-      minmax(0, 1fr)
-      78px
-      62px;
-
-    gap: 7px;
-
-    padding: 7px 9px;
-  }
-
-  .ranking-price {
-    font-size: 9px;
-  }
-
-  .ranking-change {
-    font-size: 9px;
-  }
-
-  .ai-row {
-    grid-template-columns:
-      30px
-      minmax(0, 1fr)
-      46px
-      65px;
-  }
-
-  .ai-ranking-head {
-    grid-template-columns:
-      minmax(0, 1fr)
-      46px
-      65px;
-
-    padding: 0 9px;
-  }
-
-  .execution-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .search-result-exchange {
+    display: none;
   }
 
   .search-analysis-grid {
     grid-template-columns: 1fr;
   }
 
-  .search-analysis-header,
-  .detail-header {
-    flex-direction: column;
+  .search-analysis-header {
+    align-items: stretch;
+  }
+
+  .breakdown {
+    grid-template-columns: 1fr;
+  }
+
+  .execution-grid {
+    grid-template-columns: repeat(2,1fr);
   }
 
   .holding-row {
@@ -2651,18 +2442,91 @@ svg {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .ranking-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ranking-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .ranking-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .tape-inner {
+    animation-duration: 55s;
+  }
 }
 
-/* ============================================================
-   SMALL MOBILE
-   ============================================================ */
 
-@media (max-width: 480px) {
+@media (max-width: 560px) {
+
+  .ranking-section {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .ranking-row {
+    grid-template-columns:
+      26px
+      minmax(0,1fr)
+      76px;
+
+    gap: 7px;
+
+    min-height: 52px;
+
+    padding: 8px 9px;
+  }
+
+  .ranking-price {
+    display: none;
+  }
+
+  .ai-row,
+  .ai-ranking-panel .ranking-row {
+    grid-template-columns:
+      26px
+      minmax(0,1fr)
+      42px
+      65px;
+  }
+
+  .ranking-stock strong {
+    font-size: 11px;
+  }
+
+  .ranking-stock small,
+  .ranking-stock span {
+    font-size: 8px;
+  }
+
+  .ranking-change {
+    font-size: 10px;
+  }
+}
+
+
+@media (max-width: 420px) {
+
   .brand-text h1 {
     font-size: 17px;
   }
 
   .brand-text p {
+    font-size: 10px;
+  }
+
+  .topbar-actions {
+    gap: 7px;
+  }
+
+  .updated {
     display: none;
   }
 
@@ -2671,74 +2535,8 @@ svg {
     padding: 8px 10px;
   }
 
-  .search-bar input {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .search-bar .btn-apply {
-    flex: 1;
-  }
-
-  .ranking-table-head {
-    grid-template-columns:
-      25px
-      minmax(0, 1fr)
-      70px;
-
-    padding: 0 8px;
-  }
-
-  .ranking-table-head span:nth-child(4) {
-    display: none;
-  }
-
-  .ranking-row {
-    grid-template-columns:
-      25px
-      minmax(0, 1fr)
-      70px;
-
-    padding: 7px 8px;
-  }
-
-  .ranking-change {
-    display: none;
-  }
-
-  .ranking-price {
-    font-size: 9px;
-  }
-
-  .ai-row {
-    grid-template-columns:
-      25px
-      minmax(0, 1fr)
-      42px
-      61px;
-  }
-
-  .ai-ranking-head {
-    grid-template-columns:
-      minmax(0, 1fr)
-      42px
-      61px;
-  }
-
-  .ai-score {
-    font-size: 12px;
-  }
-
-  .ai-signal {
-    min-width: 52px;
-  }
-
-  .execution-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
   .card {
-    padding: 15px;
+    padding: 16px;
   }
 
   .search-analysis,
@@ -2746,15 +2544,25 @@ svg {
   .backtest-panel,
   .account-section,
   .market-news-section {
-    padding: 15px;
+    padding: 16px;
+  }
+
+  .execution-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trade-buttons {
+    gap: 7px;
   }
 }
 
-/* ============================================================
+
+/* =========================================================
    REDUCED MOTION
-   ============================================================ */
+   ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+
   html {
     scroll-behavior: auto;
   }
@@ -2764,5 +2572,11 @@ svg {
   .brand-mark,
   .auth-mark {
     animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
   }
 }
