@@ -396,7 +396,9 @@
      * scanUniverse에서 흔히 사용할 수 있는
      * 배열 이름들을 모두 확인한다.
      */
-
+    addArray(
+      data.ranked
+    );
     addArray(
       data.results
     );
